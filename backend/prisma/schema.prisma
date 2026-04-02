@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  email        String       @unique
+  password     String
+  fullName     String
+  phoneNumber  String?
+  role         Role         @default(PLAYER)
+  isApproved   Boolean      @default(false)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+
+  bookings     Booking[]
+  ownedFutsals Futsal[]     @relation("OwnerFutsals")
+  reviews      Review[]
+  teams        TeamMember[]
+  isEmailVerified Boolean @default(false)
+  otp          String?
+  otpExpiry    DateTime?
+
+  ownerBlocks  Block[]      @relation("OwnerBlocks")
+  playerBlocks Block[]      @relation("PlayerBlocks")
+}
+
+model Futsal {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  address     String
+  latitude    Float?
+  longitude   Float?
+  basePrice   Float
+  images      String[]
+  ownerId     Int
+  isApproved  Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+
+  owner       User         @relation("OwnerFutsals", fields: [ownerId], references: [id])
+  reviews     Review[]
+  courts      Court[]
+  tournaments Tournament[]
+  blocks      Block[]
+}
+
+model Court {
+  id                 Int       @id @default(autoincrement())
+  futsalId           Int
+  courtNumber        String
+  courtType          String
+  basePrice          Float
+  peakPrice          Float?
+  amenities          String[]
+  isActive           Boolean   @default(true)
+  isUnderMaintenance Boolean   @default(false)
+  maintenanceUntil   DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  futsal Futsal     @relation(fields: [futsalId], references: [id])
+  slots  TimeSlot[]
+}
+
+model TimeSlot {
+  id          Int        @id @default(autoincrement())
+  courtId     Int
+  date        DateTime
+  startTime   String
+  endTime     String
+  price       Float
+  status      SlotStatus @default(AVAILABLE)
+  lockedUntil DateTime?
+
+  bookings    Booking[]  
+
+  court       Court      @relation(fields: [courtId], references: [id])
+}
+
+model Booking {
+  id           Int           @id @default(autoincrement())
+  userId       Int
+  slotId       Int          
+  totalPrice   Float
+  duration     Int           @default(1)        // ✅ added
+  paymentMethod String       @default("COD")    // ✅ added
+  groupId      String?                          // ✅ groups multi-hour bookings
+  status       BookingStatus @default(PENDING)
+  bookingDate  DateTime      @default(now())
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+  review     Review?
+
+  slot         TimeSlot      @relation(fields: [slotId], references: [id])
+  user         User          @relation(fields: [userId], references: [id])
+  payment      Payment?
+
+  @@index([slotId])
+  @@index([status])
+  @@index([groupId])
+}
+
+model Payment {
+  id            Int      @id @default(autoincrement())
+  bookingId     Int      @unique
+  amount        Float
+  method        String
+  status        String
+  transactionId String?
+  createdAt     DateTime @default(now())
+
+  booking       Booking  @relation(fields: [bookingId], references: [id])
+}
+
+model Tournament {
+  id          Int            @id @default(autoincrement())
+  futsalId    Int
+  name        String
+  description String?        // ← ADD
+  type        TournamentType
+  startDate   DateTime
+  endDate     DateTime?      // ← make optional
+  maxTeams    Int
+  entryFee    Float?         // ← ADD
+  prizePool   Float?         // ← ADD
+  rules       String?        // ← ADD
+  prizes      String[]       // ← ADD
+  isPublished Boolean        @default(false)  // ← ADD
+  status      String         @default("DRAFT")  // ← change UPCOMING to DRAFT
+  createdAt   DateTime       @default(now())  // ← ADD
+
+  matches     Match[]
+  teams       Team[]
+  futsal      Futsal         @relation(fields: [futsalId], references: [id])
+}
+
+model Team {
+  id           Int          @id @default(autoincrement())
+  name         String
+  tournamentId Int
+  logo         String?
+
+  awayMatches  Match[]      @relation("AwayTeam")
+  homeMatches  Match[]      @relation("HomeTeam")
+
+  tournament   Tournament   @relation(fields: [tournamentId], references: [id])
+  players      TeamMember[]
+}
+
+model TeamMember {
+  id     Int    @id @default(autoincrement())
+  teamId Int
+  userId Int?
+  role   String @default("PLAYER")
+  playerName  String? 
+  playerPhone String? 
+  jerseyColor String? 
+
+  team   Team   @relation(fields: [teamId], references: [id])
+  user   User?   @relation(fields: [userId], references: [id])
+}
+
+model Match {
+  id           Int         @id @default(autoincrement())
+  tournamentId Int
+  homeTeamId   Int
+  awayTeamId   Int
+  matchDate    DateTime
+  homeScore    Int?
+  awayScore    Int?
+  status       MatchStatus @default(SCHEDULED)
+  round        String
+
+  awayTeam     Team        @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeTeam     Team        @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  tournament   Tournament  @relation(fields: [tournamentId], references: [id])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  futsalId  Int
+  bookingId Int      @unique  // one review per booking
+  rating    Float    // 1.0 to 5.0
+  comment   String?
+  reply     String?  // owner's reply
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  futsal    Futsal   @relation(fields: [futsalId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+
+  @@index([futsalId])
+  @@index([userId])
+}
+
+model Block {
+  id        Int      @id @default(autoincrement())
+  ownerId   Int
+  playerId  Int
+  futsalId  Int
+  reason    String?
+  createdAt DateTime @default(now())
+
+  owner     User   @relation("OwnerBlocks", fields: [ownerId], references: [id])
+  player    User   @relation("PlayerBlocks", fields: [playerId], references: [id])
+  futsal    Futsal @relation(fields: [futsalId], references: [id])
+
+  @@unique([ownerId, playerId, futsalId])
+}
+
+enum Role {
+  PLAYER
+  OWNER
+  ADMIN
+}
+
+enum SlotStatus {
+  AVAILABLE
+  LOCKED
+  BOOKED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum TournamentType {
+  KNOCKOUT
+  ROUND_ROBIN
+}
+
+enum MatchStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
