@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../models/futsal.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/app_theme.dart';
 
 class QuickActions extends StatelessWidget {
   final Futsal currentFutsal;
@@ -29,20 +30,14 @@ class QuickActions extends StatelessWidget {
     final isActive = currentFutsal.status == 'ACTIVE';
     final isMobile = Responsive.isMobile(context);
     final padding = isMobile ? 16.0 : 20.0;
-    final titleFontSize = isMobile ? 16.0 : 18.0;
 
     return Container(
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(isMobile ? 16 : 20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        border: Border.all(color: AppTheme.surfaceBorder),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,25 +45,34 @@ class QuickActions extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Quick Actions',
                 style: TextStyle(
-                  fontSize: titleFontSize,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
                 ),
               ),
               if (futsalCount > 1 && !isMobile)
-                Text(
-                  'Current: ${currentFutsal.name}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceLight,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusRound),
+                    border: Border.all(color: AppTheme.surfaceBorder),
                   ),
-                  overflow: TextOverflow.ellipsis,
+                  child: Text(
+                    currentFutsal.name,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textMuted,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Responsive.adaptiveLayout(
             context: context,
             mobile: _buildMobileGrid(isActive),
@@ -83,57 +87,8 @@ class QuickActions extends StatelessWidget {
   Widget _buildMobileGrid(bool isActive) {
     return Wrap(
       spacing: 12,
-      runSpacing: 12,
-      children: [
-        _buildActionButton(
-          icon: Icons.sports_soccer,
-          label: 'Courts',
-          onTap: onCourts,
-          color: Colors.blue,
-          isEnabled: isActive,
-          isMobile: true,
-        ),
-        _buildActionButton(
-          icon: Icons.calendar_month,
-          label: 'Bookings',
-          onTap: onBookings,
-          color: Colors.green,
-          isEnabled: isActive,
-          isMobile: true,
-        ),
-        _buildActionButton(
-          icon: Icons.emoji_events,
-          label: 'Tournaments',
-          onTap: onTournaments,
-          color: Colors.purple,
-          isEnabled: true,
-          isMobile: true,
-        ),
-        _buildActionButton(
-          icon: Icons.bar_chart,
-          label: 'Analytics',
-          onTap: onAnalytics,
-          color: Colors.orange,
-          isEnabled: isActive,
-          isMobile: true,
-        ),
-        _buildActionButton(
-          icon: Icons.star,
-          label: 'Reviews',
-          onTap: onReviews,
-          color: Colors.amber,
-          isEnabled: isActive,
-          isMobile: true,
-        ),
-        _buildActionButton(
-          icon: Icons.block,
-          label: 'Blocked',
-          onTap: onBlocked,
-          color: Colors.red,
-          isEnabled: true,
-          isMobile: true,
-        ),
-      ],
+      runSpacing: 16,
+      children: _buildActionButtons(isActive, true),
     );
   }
 
@@ -141,56 +96,7 @@ class QuickActions extends StatelessWidget {
     return Wrap(
       spacing: 16,
       runSpacing: 16,
-      children: [
-        _buildActionButton(
-          icon: Icons.sports_soccer,
-          label: 'Courts',
-          onTap: onCourts,
-          color: Colors.blue,
-          isEnabled: isActive,
-          isMobile: false,
-        ),
-        _buildActionButton(
-          icon: Icons.calendar_month,
-          label: 'Bookings',
-          onTap: onBookings,
-          color: Colors.green,
-          isEnabled: isActive,
-          isMobile: false,
-        ),
-        _buildActionButton(
-          icon: Icons.emoji_events,
-          label: 'Tournaments',
-          onTap: onTournaments,
-          color: Colors.purple,
-          isEnabled: true,
-          isMobile: false,
-        ),
-        _buildActionButton(
-          icon: Icons.bar_chart,
-          label: 'Analytics',
-          onTap: onAnalytics,
-          color: Colors.orange,
-          isEnabled: isActive,
-          isMobile: false,
-        ),
-        _buildActionButton(
-          icon: Icons.star,
-          label: 'Reviews',
-          onTap: onReviews,
-          color: Colors.amber,
-          isEnabled: isActive,
-          isMobile: false,
-        ),
-        _buildActionButton(
-          icon: Icons.block,
-          label: 'Blocked',
-          onTap: onBlocked,
-          color: Colors.red,
-          isEnabled: true,
-          isMobile: false,
-        ),
-      ],
+      children: _buildActionButtons(isActive, false),
     );
   }
 
@@ -198,57 +104,61 @@ class QuickActions extends StatelessWidget {
     return Wrap(
       spacing: 20,
       runSpacing: 20,
-      children: [
-        _buildActionButton(
-          icon: Icons.sports_soccer,
-          label: 'Courts',
-          onTap: onCourts,
-          color: Colors.blue,
-          isEnabled: isActive,
-          isMobile: false,
-        ),
-        _buildActionButton(
-          icon: Icons.calendar_month,
-          label: 'Bookings',
-          onTap: onBookings,
-          color: Colors.green,
-          isEnabled: isActive,
-          isMobile: false,
-        ),
-        _buildActionButton(
-          icon: Icons.emoji_events,
-          label: 'Tournaments',
-          onTap: onTournaments,
-          color: Colors.purple,
-          isEnabled: true,
-          isMobile: false,
-        ),
-        _buildActionButton(
-          icon: Icons.bar_chart,
-          label: 'Analytics',
-          onTap: onAnalytics,
-          color: Colors.orange,
-          isEnabled: isActive,
-          isMobile: false,
-        ),
-        _buildActionButton(
-          icon: Icons.star,
-          label: 'Reviews',
-          onTap: onReviews,
-          color: Colors.amber,
-          isEnabled: isActive,
-          isMobile: false,
-        ),
-        _buildActionButton(
-          icon: Icons.block,
-          label: 'Blocked',
-          onTap: onBlocked,
-          color: Colors.red,
-          isEnabled: true,
-          isMobile: false,
-        ),
-      ],
+      children: _buildActionButtons(isActive, false),
     );
+  }
+
+  List<Widget> _buildActionButtons(bool isActive, bool isMobile) {
+    return [
+      _buildActionButton(
+        icon: Icons.sports_soccer,
+        label: 'Courts',
+        onTap: onCourts,
+        color: AppTheme.info,
+        isEnabled: isActive,
+        isMobile: isMobile,
+      ),
+      _buildActionButton(
+        icon: Icons.calendar_month,
+        label: 'Bookings',
+        onTap: onBookings,
+        color: AppTheme.primary,
+        isEnabled: isActive,
+        isMobile: isMobile,
+      ),
+      _buildActionButton(
+        icon: Icons.emoji_events,
+        label: 'Tournaments',
+        onTap: onTournaments,
+        color: Color(0xFF9C27B0),
+        isEnabled: true,
+        isMobile: isMobile,
+      ),
+      _buildActionButton(
+        icon: Icons.bar_chart,
+        label: 'Analytics',
+        onTap: onAnalytics,
+        color: AppTheme.accent,
+        isEnabled: isActive,
+        isMobile: isMobile,
+      ),
+      _buildActionButton(
+        icon: Icons.star,
+        label: 'Reviews',
+        onTap: onReviews,
+        color: AppTheme.warning,
+        isEnabled: isActive,
+        isMobile: isMobile,
+      ),
+      _buildActionButton(
+        icon: Icons.block,
+        label: 'Blocked',
+        onTap: onBlocked,
+        color: AppTheme.error,
+        isEnabled: true,
+        isMobile: isMobile,
+      ),
+    ];
   }
 
   Widget _buildActionButton({
@@ -259,15 +169,16 @@ class QuickActions extends StatelessWidget {
     required bool isEnabled,
     required bool isMobile,
   }) {
-    final iconSize = isMobile ? 20.0 : 28.0;
-    final labelSize = isMobile ? 11.0 : 14.0;
-    final padding = isMobile ? 10.0 : 16.0;
-    final borderRadius = isMobile ? 10.0 : 14.0;
-    
+    final iconSize = isMobile ? 22.0 : 28.0;
+    final labelSize = isMobile ? 11.0 : 13.0;
+    final padding = isMobile ? 12.0 : 16.0;
+    final borderRadius = isMobile ? 12.0 : 16.0;
+
     return GestureDetector(
       onTap: isEnabled ? onTap : null,
-      child: Opacity(
-        opacity: isEnabled ? 1.0 : 0.5,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: isEnabled ? 1.0 : 0.4,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -276,16 +187,20 @@ class QuickActions extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(borderRadius),
+                border: Border.all(
+                  color: color.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
               child: Icon(icon, color: color, size: iconSize),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               label,
               style: TextStyle(
                 fontSize: labelSize,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondary,
               ),
             ),
           ],

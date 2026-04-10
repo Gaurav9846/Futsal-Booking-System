@@ -4,6 +4,7 @@ import '../../../../models/futsal.dart';
 import '../../../../providers/auth_provider.dart';
 import '../../../../providers/favorite_provider.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/app_theme.dart';
 
 class FutsalCard extends StatelessWidget {
   final Futsal futsal;
@@ -25,21 +26,16 @@ class FutsalCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        border: Border.all(color: AppTheme.surfaceBorder, width: 1),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         child: Column(
-          mainAxisSize: MainAxisSize.min, // CRITICAL: Prevents extra space
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Image Section
@@ -47,7 +43,7 @@ class FutsalCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(15),
+                    top: Radius.circular(AppTheme.radiusLarge),
                   ),
                   child: futsal.images.isNotEmpty
                       ? Image.network(
@@ -61,56 +57,148 @@ class FutsalCard extends StatelessWidget {
                         )
                       : _buildPlaceholderImage(imageHeight),
                 ),
+                
+                // Gradient overlay at bottom
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 80,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          AppTheme.surface.withOpacity(0.9),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Court type badges
+                if (courtTypes.isNotEmpty)
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Row(
+                      children: courtTypes.map((type) {
+                        final isIndoor = type == 'indoor';
+                        return Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isIndoor 
+                                ? AppTheme.indoor.withOpacity(0.9) 
+                                : AppTheme.outdoor.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isIndoor ? Icons.house : Icons.wb_sunny,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isIndoor ? 'Indoor' : 'Outdoor',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                
                 // Favorite Button
                 Positioned(
-                  top: 10,
-                  right: 10,
+                  top: 12,
+                  right: 12,
                   child: Consumer<FavoriteProvider>(
                     builder: (context, favProvider, child) {
                       final isFav = favProvider.isFavorite(futsal.id);
                       return Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.surface.withOpacity(0.9),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 5,
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
                         child: IconButton(
                           icon: Icon(
                             isFav ? Icons.favorite : Icons.favorite_border,
-                            color: isFav ? Colors.red : Colors.grey.shade600,
-                            size: isDesktop ? 24 : 20,
+                            color: isFav ? AppTheme.error : AppTheme.textSecondary,
+                            size: isDesktop ? 22 : 20,
                           ),
                           onPressed: () async {
-                            final auth = Provider.of<AuthProvider>(context,
-                                listen: false);
+                            final auth = Provider.of<AuthProvider>(context, listen: false);
                             if (!auth.isAuthenticated) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
+                                SnackBar(
+                                  content: const Row(
+                                    children: [
+                                      Icon(Icons.info_outline, color: Colors.white, size: 20),
+                                      SizedBox(width: 12),
                                       Text('Please log in to save favorites'),
-                                  backgroundColor: Colors.orange,
+                                    ],
+                                  ),
+                                  backgroundColor: AppTheme.warning,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                                  ),
                                 ),
                               );
                               return;
                             }
 
-                            final success =
-                                await favProvider.toggleFavorite(futsal.id);
+                            final success = await favProvider.toggleFavorite(futsal.id);
                             if (success && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(
-                                    isFav
-                                        ? 'Removed from favorites'
-                                        : 'Added to favorites',
+                                  content: Row(
+                                    children: [
+                                      Icon(
+                                        isFav ? Icons.heart_broken : Icons.favorite,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        isFav ? 'Removed from favorites' : 'Added to favorites',
+                                      ),
+                                    ],
                                   ),
-                                  backgroundColor: Colors.green,
+                                  backgroundColor: AppTheme.success,
                                   duration: const Duration(seconds: 1),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                                  ),
                                 ),
                               );
                             }
@@ -120,23 +208,25 @@ class FutsalCard extends StatelessWidget {
                     },
                   ),
                 ),
+                
                 // Rating Badge
                 if (futsal.averageRating != null)
                   Positioned(
-                    bottom: 10,
-                    right: 10,
+                    bottom: 12,
+                    left: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 10,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.amber.shade700,
-                        borderRadius: BorderRadius.circular(12),
+                        color: AppTheme.warning,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.amber.shade700.withOpacity(0.3),
-                            blurRadius: 5,
+                            color: AppTheme.warning.withOpacity(0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
@@ -145,16 +235,16 @@ class FutsalCard extends StatelessWidget {
                         children: [
                           const Icon(
                             Icons.star,
-                            size: 12,
+                            size: 14,
                             color: Colors.white,
                           ),
-                          const SizedBox(width: 2),
+                          const SizedBox(width: 4),
                           Text(
                             futsal.averageRating!.toStringAsFixed(1),
                             style: const TextStyle(
                               color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
                             ),
                           ),
                         ],
@@ -164,83 +254,48 @@ class FutsalCard extends StatelessWidget {
               ],
             ),
 
-            // Content Section - Reduced padding
+            // Content Section
             Padding(
-              padding: EdgeInsets.fromLTRB(
-                isDesktop ? 20 : 16,  // left
-                isDesktop ? 16 : 12,  // top - REDUCED
-                isDesktop ? 20 : 16,  // right
-                isDesktop ? 16 : 12,  // bottom - REDUCED
-              ),
+              padding: EdgeInsets.all(isDesktop ? 20 : 16),
               child: Column(
-                mainAxisSize: MainAxisSize.min, // Prevents extra space
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title and badges row
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          futsal.name,
-                          style: TextStyle(
-                            fontSize: Responsive.headline2(context),
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: isDesktop ? 2 : 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (courtTypes.isNotEmpty)
-                        Wrap(
-                          spacing: 4,
-                          children: courtTypes.map((type) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6, 
-                              vertical: 2
-                            ),
-                            decoration: BoxDecoration(
-                              color: type == 'indoor'
-                                  ? Colors.blue.shade50
-                                  : Colors.green.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: type == 'indoor'
-                                    ? Colors.blue.shade200
-                                    : Colors.green.shade200,
-                              ),
-                            ),
-                            child: Text(
-                              type == 'indoor' ? 'Indoor' : 'Outdoor',
-                              style: TextStyle(
-                                fontSize: Responsive.caption(context),
-                                color: type == 'indoor'
-                                    ? Colors.blue.shade700
-                                    : Colors.green.shade700,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          )).toList(),
-                        ),
-                    ],
+                  // Title
+                  Text(
+                    futsal.name,
+                    style: TextStyle(
+                      fontSize: Responsive.headline2(context),
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                    maxLines: isDesktop ? 2 : 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  
-                  const SizedBox(height: 6), // REDUCED from 8
-                  
+
+                  const SizedBox(height: 8),
+
                   // Location with distance
                   Row(
                     children: [
-                      Icon(
-                        Icons.location_on,
-                        size: isDesktop ? 18 : 14, // SMALLER
-                        color: Colors.grey.shade500,
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceLight,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                        ),
+                        child: const Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: AppTheme.primary,
+                        ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           futsal.address,
                           style: TextStyle(
-                            color: Colors.grey.shade600,
+                            color: AppTheme.textSecondary,
                             fontSize: Responsive.bodyText(context),
                           ),
                           maxLines: 1,
@@ -250,29 +305,33 @@ class FutsalCard extends StatelessWidget {
                       if (futsal.distance != null)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,  // REDUCED from 8
-                            vertical: 2,    // REDUCED from 3
+                            horizontal: 8,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(10), // REDUCED from 12
-                            border: Border.all(color: Colors.blue.shade200),
+                            color: AppTheme.info.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                            border: Border.all(
+                              color: AppTheme.info.withOpacity(0.3),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.near_me,
-                                  size: isDesktop ? 12 : 10, // SMALLER
-                                  color: Colors.blue.shade600),
-                              const SizedBox(width: 2), // REDUCED from 4
+                              Icon(
+                                Icons.near_me,
+                                size: 12,
+                                color: AppTheme.info,
+                              ),
+                              const SizedBox(width: 4),
                               Text(
                                 futsal.distance! < 1
                                     ? '${(futsal.distance! * 1000).round()}m'
                                     : '${futsal.distance!.toStringAsFixed(1)}km',
                                 style: TextStyle(
-                                  fontSize: Responsive.caption(context) - 1,
-                                  color: Colors.blue.shade700,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: Responsive.caption(context),
+                                  color: AppTheme.info,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
@@ -280,26 +339,26 @@ class FutsalCard extends StatelessWidget {
                         ),
                     ],
                   ),
-                  
-                  const SizedBox(height: 6), // REDUCED from 8
-                  
+
+                  const SizedBox(height: 12),
+
                   // Amenities
                   if (amenities.isNotEmpty)
                     SizedBox(
-                      height: isDesktop ? 32 : 28, // REDUCED from 40/32
+                      height: isDesktop ? 34 : 30,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: isDesktop 
-                            ? amenities.take(4).length 
+                        itemCount: isDesktop
+                            ? amenities.take(4).length
                             : amenities.take(3).length,
                         itemBuilder: (context, index) {
                           final amenity = amenities[index];
                           return Padding(
-                            padding: const EdgeInsets.only(right: 6), // REDUCED from 8
+                            padding: const EdgeInsets.only(right: 8),
                             child: _buildAmenityChip(
                               _getAmenityIcon(amenity),
-                              amenity.length > (isDesktop ? 20 : 15)
-                                  ? '${amenity.substring(0, isDesktop ? 17 : 12)}...'
+                              amenity.length > (isDesktop ? 20 : 12)
+                                  ? '${amenity.substring(0, isDesktop ? 17 : 9)}...'
                                   : amenity,
                               context,
                             ),
@@ -307,13 +366,21 @@ class FutsalCard extends StatelessWidget {
                         },
                       ),
                     ),
-                  
-                  const SizedBox(height: 8), // REDUCED from 12
-                  
+
+                  const SizedBox(height: 16),
+
+                  // Divider
+                  Container(
+                    height: 1,
+                    color: AppTheme.surfaceBorder,
+                  ),
+
+                  const SizedBox(height: 16),
+
                   // Price and Book Button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,35 +389,36 @@ class FutsalCard extends StatelessWidget {
                           Text(
                             minPrice != null ? 'Starting from' : 'Price varies',
                             style: TextStyle(
-                              fontSize: Responsive.caption(context) - 1,
-                              color: Colors.grey.shade500,
+                              fontSize: Responsive.caption(context),
+                              color: AppTheme.textMuted,
                             ),
                           ),
+                          const SizedBox(height: 2),
                           if (minPrice != null)
                             RichText(
                               text: TextSpan(
                                 children: [
                                   TextSpan(
-                                    text: 'रू ',
+                                    text: 'Rs ',
                                     style: TextStyle(
-                                      color: Colors.green.shade700,
-                                      fontSize: isDesktop ? 20 : 18, // REDUCED
-                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primary,
+                                      fontSize: isDesktop ? 16 : 14,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   TextSpan(
                                     text: minPrice.toStringAsFixed(0),
                                     style: TextStyle(
-                                      color: Colors.green,
-                                      fontSize: isDesktop ? 24 : 20, // REDUCED
-                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primary,
+                                      fontSize: isDesktop ? 24 : 20,
+                                      fontWeight: FontWeight.w800,
                                     ),
                                   ),
                                   TextSpan(
                                     text: '/hr',
                                     style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: isDesktop ? 12 : 10, // REDUCED
+                                      color: AppTheme.textMuted,
+                                      fontSize: isDesktop ? 12 : 11,
                                     ),
                                   ),
                                 ],
@@ -360,33 +428,49 @@ class FutsalCard extends StatelessWidget {
                             Text(
                               'Check availability',
                               style: TextStyle(
-                                color: Colors.green,
-                                fontSize: Responsive.bodyText(context) - 1,
+                                color: AppTheme.primary,
+                                fontSize: Responsive.bodyText(context),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                         ],
                       ),
-                      ElevatedButton(
-                        onPressed: onTap,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8), // REDUCED from 10
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isDesktop ? 20 : 16, // REDUCED
-                            vertical: isDesktop ? 10 : 8,    // REDUCED
-                          ),
-                          minimumSize: Size.zero, // Allows button to shrink
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                          boxShadow: AppTheme.primaryShadow,
                         ),
-                        child: Text(
-                          'Book Now',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: Responsive.bodyText(context) - 1,
+                        child: ElevatedButton(
+                          onPressed: onTap,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isDesktop ? 24 : 20,
+                              vertical: isDesktop ? 14 : 12,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            elevation: 0,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Book Now',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: Responsive.bodyText(context),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Icon(Icons.arrow_forward, size: 16),
+                            ],
                           ),
                         ),
                       ),
@@ -407,14 +491,32 @@ class FutsalCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.green.shade100, Colors.green.shade50],
+          colors: [
+            AppTheme.primary.withOpacity(0.2),
+            AppTheme.primary.withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
       ),
       child: Center(
-        child: Icon(
-          Icons.sports_soccer,
-          size: 50,
-          color: Colors.green.shade300,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.sports_soccer,
+              size: 48,
+              color: AppTheme.primary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No Image',
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -425,32 +527,34 @@ class FutsalCard extends StatelessWidget {
     if (lower.contains('parking')) return Icons.local_parking;
     if (lower.contains('water')) return Icons.local_drink;
     if (lower.contains('light')) return Icons.light_mode;
-    if (lower.contains('chair') || lower.contains('seating'))
-      return Icons.chair;
-    if (lower.contains('shower') || lower.contains('changing'))
-      return Icons.shower;
+    if (lower.contains('chair') || lower.contains('seating')) return Icons.chair;
+    if (lower.contains('shower') || lower.contains('changing')) return Icons.shower;
     if (lower.contains('wifi')) return Icons.wifi;
     if (lower.contains('ac')) return Icons.ac_unit;
-    return Icons.fitness_center;
+    if (lower.contains('locker')) return Icons.lock;
+    if (lower.contains('cafe') || lower.contains('food')) return Icons.restaurant;
+    return Icons.check_circle_outline;
   }
 
   Widget _buildAmenityChip(IconData icon, String label, BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3), // REDUCED
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8), // REDUCED from 12
+        color: AppTheme.surfaceLight,
+        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+        border: Border.all(color: AppTheme.surfaceBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 10, color: Colors.grey.shade700), // REDUCED from 12/14
-          const SizedBox(width: 3), // REDUCED from 4
+          Icon(icon, size: 12, color: AppTheme.textMuted),
+          const SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
-              fontSize: Responsive.caption(context) - 1,
-              color: Colors.grey.shade700,
+              fontSize: Responsive.caption(context),
+              color: AppTheme.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

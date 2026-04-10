@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/app_theme.dart';
 
 class StatsCard extends StatelessWidget {
   final int totalCourts;
@@ -24,10 +25,18 @@ class StatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(),
+      return Container(
+        padding: const EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          border: Border.all(color: AppTheme.surfaceBorder),
+        ),
+        child: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+          ),
         ),
       );
     }
@@ -36,22 +45,23 @@ class StatsCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
-          borderRadius: BorderRadius.circular(12),
+          color: AppTheme.error.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          border: Border.all(color: AppTheme.error.withOpacity(0.3)),
         ),
         child: Row(
           children: [
-            Icon(Icons.error_outline, color: Colors.red.shade300),
-            const SizedBox(width: 8),
-            Expanded(
+            Icon(Icons.error_outline, color: AppTheme.error),
+            const SizedBox(width: 12),
+            const Expanded(
               child: Text(
                 'Could not load stats',
-                style: TextStyle(color: Colors.red.shade700),
+                style: TextStyle(color: AppTheme.error),
               ),
             ),
             TextButton(
               onPressed: onRetry,
-              child: const Text('Retry'),
+              child: const Text('Retry', style: TextStyle(color: AppTheme.primary)),
             ),
           ],
         ),
@@ -64,25 +74,50 @@ class StatsCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.green.shade50, Colors.green.shade100],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(isMobile ? 16 : 20),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        border: Border.all(color: AppTheme.surfaceBorder),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Overview',
-            style: TextStyle(
-              fontSize: isMobile ? 14 : 16,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Overview',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusRound),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.today, size: 14, color: AppTheme.primary),
+                    SizedBox(width: 4),
+                    Text(
+                      'Today',
+                      style: TextStyle(
+                        color: AppTheme.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Responsive.adaptiveLayout(
             context: context,
             mobile: _buildMobileStats(),
@@ -104,7 +139,7 @@ class StatsCard extends StatelessWidget {
                 icon: Icons.sports_soccer,
                 value: totalCourts.toString(),
                 label: 'Total Courts',
-                color: Colors.blue,
+                color: AppTheme.info,
                 isMobile: true,
               ),
             ),
@@ -114,7 +149,7 @@ class StatsCard extends StatelessWidget {
                 icon: Icons.calendar_today,
                 value: todayBookings.toString(),
                 label: "Today's Bookings",
-                color: Colors.green,
+                color: AppTheme.primary,
                 isMobile: true,
               ),
             ),
@@ -126,9 +161,9 @@ class StatsCard extends StatelessWidget {
             Expanded(
               child: _buildStatItem(
                 icon: Icons.currency_rupee,
-                value: 'रू $todayRevenue',
+                value: 'Rs ${todayRevenue.toStringAsFixed(0)}',
                 label: "Today's Revenue",
-                color: Colors.orange,
+                color: AppTheme.accent,
                 isMobile: true,
               ),
             ),
@@ -137,8 +172,8 @@ class StatsCard extends StatelessWidget {
               child: _buildStatItem(
                 icon: Icons.hourglass_empty,
                 value: pendingApprovals.toString(),
-                label: 'Pending Approval',
-                color: Colors.purple,
+                label: 'Pending',
+                color: AppTheme.warning,
                 isMobile: true,
               ),
             ),
@@ -156,7 +191,7 @@ class StatsCard extends StatelessWidget {
             icon: Icons.sports_soccer,
             value: totalCourts.toString(),
             label: 'Total Courts',
-            color: Colors.blue,
+            color: AppTheme.info,
             isMobile: false,
           ),
         ),
@@ -166,7 +201,7 @@ class StatsCard extends StatelessWidget {
             icon: Icons.calendar_today,
             value: todayBookings.toString(),
             label: "Today's Bookings",
-            color: Colors.green,
+            color: AppTheme.primary,
             isMobile: false,
           ),
         ),
@@ -174,9 +209,9 @@ class StatsCard extends StatelessWidget {
         Expanded(
           child: _buildStatItem(
             icon: Icons.currency_rupee,
-            value: 'रू $todayRevenue',
+            value: 'Rs ${todayRevenue.toStringAsFixed(0)}',
             label: "Today's Revenue",
-            color: Colors.orange,
+            color: AppTheme.accent,
             isMobile: false,
           ),
         ),
@@ -185,8 +220,8 @@ class StatsCard extends StatelessWidget {
           child: _buildStatItem(
             icon: Icons.hourglass_empty,
             value: pendingApprovals.toString(),
-            label: 'Pending Approval',
-            color: Colors.purple,
+            label: 'Pending',
+            color: AppTheme.warning,
             isMobile: false,
           ),
         ),
@@ -202,34 +237,35 @@ class StatsCard extends StatelessWidget {
     required bool isMobile,
   }) {
     final iconSize = isMobile ? 20.0 : 24.0;
-    final valueFontSize = isMobile ? 16.0 : 18.0;
+    final valueFontSize = isMobile ? 18.0 : 22.0;
     final labelFontSize = isMobile ? 11.0 : 13.0;
-    final padding = isMobile ? 12.0 : 16.0;
-    
+    final padding = isMobile ? 14.0 : 18.0;
+
     return Container(
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(isMobile ? 12 : 14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppTheme.surfaceLight,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(color: AppTheme.surfaceBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: iconSize),
-          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+            ),
+            child: Icon(icon, color: color, size: iconSize),
+          ),
+          const SizedBox(height: 12),
           Text(
             value,
             style: TextStyle(
               fontSize: valueFontSize,
-              fontWeight: FontWeight.bold,
-              color: color,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -238,7 +274,7 @@ class StatsCard extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: labelFontSize,
-              color: Colors.grey.shade600,
+              color: AppTheme.textMuted,
             ),
           ),
         ],

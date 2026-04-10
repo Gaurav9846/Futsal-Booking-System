@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../models/futsal.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/app_theme.dart';
 
 class DashboardFutsalCard extends StatelessWidget {
   final Futsal futsal;
@@ -26,25 +27,21 @@ class DashboardFutsalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPending = futsal.status == 'PENDING';
     final isDeactivated = futsal.status == 'DEACTIVATED';
+    final isActive = futsal.status == 'ACTIVE';
     final hasCourts = futsal.courts != null && futsal.courts!.isNotEmpty;
     final isMobile = Responsive.isMobile(context);
-    final isDesktop = Responsive.isDesktop(context);
-    
-    // Responsive values
-    final cardMargin = isMobile ? 16.0 : 12.0;
-    final cardElevation = isMobile ? 2.0 : 3.0;
-    final cardPadding = isMobile ? 12.0 : 16.0;
-    final logoSize = isMobile ? 60.0 : 70.0;
-    final iconSize = isMobile ? 30.0 : 36.0;
-    final titleFontSize = isMobile ? 18.0 : 20.0;
-    final addressFontSize = isMobile ? 12.0 : 13.0;
-    final priceFontSize = isMobile ? 12.0 : 13.0;
 
-    return Card(
-      margin: EdgeInsets.only(bottom: cardMargin),
-      elevation: cardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    final cardPadding = isMobile ? 14.0 : 18.0;
+    final logoSize = isMobile ? 56.0 : 64.0;
+    final iconSize = isMobile ? 28.0 : 32.0;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: isMobile ? 14 : 16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        border: Border.all(color: AppTheme.surfaceBorder),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         children: [
@@ -52,18 +49,24 @@ class DashboardFutsalCard extends StatelessWidget {
           if (isPending)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-              decoration: const BoxDecoration(
-                color: Colors.orange,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+              decoration: BoxDecoration(
+                color: AppTheme.warning,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppTheme.radiusLarge),
+                ),
               ),
               child: const Row(
                 children: [
                   Icon(Icons.hourglass_empty, color: Colors.white, size: 16),
-                  SizedBox(width: 4),
+                  SizedBox(width: 8),
                   Text(
                     'Pending Approval',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -71,40 +74,93 @@ class DashboardFutsalCard extends StatelessWidget {
           if (isDeactivated)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+              decoration: BoxDecoration(
+                color: AppTheme.error,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppTheme.radiusLarge),
+                ),
               ),
               child: const Row(
                 children: [
                   Icon(Icons.block, color: Colors.white, size: 16),
-                  SizedBox(width: 4),
+                  SizedBox(width: 8),
                   Text(
                     'Deactivated',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
             ),
-          
+          if (isActive)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+              decoration: BoxDecoration(
+                color: AppTheme.success,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppTheme.radiusLarge),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white, size: 16),
+                  SizedBox(width: 8),
+                  Text(
+                    'Active',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           Padding(
             padding: EdgeInsets.all(cardPadding),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Logo
+                // Logo/Image
                 Container(
                   width: logoSize,
                   height: logoSize,
                   decoration: BoxDecoration(
-                    color: Colors.green.shade100,
-                    borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
+                    color: AppTheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                    border: Border.all(
+                      color: AppTheme.primary.withOpacity(0.3),
+                    ),
                   ),
-                  child: Icon(Icons.sports_soccer, color: Colors.green, size: iconSize),
+                  child: futsal.images.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium - 1),
+                          child: Image.network(
+                            futsal.images.first,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.sports_soccer,
+                                color: AppTheme.primary,
+                                size: iconSize,
+                              );
+                            },
+                          ),
+                        )
+                      : Icon(
+                          Icons.sports_soccer,
+                          color: AppTheme.primary,
+                          size: iconSize,
+                        ),
                 ),
-                SizedBox(width: isMobile ? 12 : 16),
-                
+                SizedBox(width: isMobile ? 14 : 18),
+
                 // Info Section
                 Expanded(
                   child: Column(
@@ -113,23 +169,28 @@ class DashboardFutsalCard extends StatelessWidget {
                       Text(
                         futsal.name,
                         style: TextStyle(
-                          fontSize: titleFontSize,
-                          fontWeight: FontWeight.bold,
+                          fontSize: isMobile ? 17 : 19,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
                         ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.location_on, size: isMobile ? 14 : 15, color: Colors.grey),
-                          SizedBox(width: isMobile ? 4 : 6),
+                          Icon(
+                            Icons.location_on,
+                            size: 14,
+                            color: AppTheme.textMuted,
+                          ),
+                          const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               futsal.address,
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: addressFontSize,
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 13,
                               ),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
@@ -137,164 +198,221 @@ class DashboardFutsalCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Price varies by court',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.normal,
-                          fontSize: priceFontSize,
-                        ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceLight,
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.sports_soccer,
+                                  size: 12,
+                                  color: AppTheme.textMuted,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${futsal.courts?.length ?? 0} courts',
+                                  style: const TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (futsal.averageRating != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.warning.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.star,
+                                    size: 12,
+                                    color: AppTheme.warning,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    futsal.averageRating!.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      color: AppTheme.warning,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
                 ),
-                
-                // Action Buttons - Different for Mobile and Desktop
+
+                // Action Buttons
                 isMobile
-                    ? PopupMenuButton<String>(
-                        iconSize: 24,
-                        onSelected: (value) {
-                          switch (value) {
-                            case 'edit':
-                              onEdit();
-                              break;
-                            case 'delete':
-                              onDelete();
-                              break;
-                            case 'manage_courts':
-                              onManageCourts();
-                              break;
-                            case 'view_bookings':
-                              onViewBookings();
-                              break;
-                            case 'view_reviews':
-                              onViewReviews();
-                              break;
-                            case 'toggle_active':
-                              onToggleActive();
-                              break;
-                          }
-                        },
-                        itemBuilder: (ctx) => [
-                          PopupMenuItem(
-                            value: 'manage_courts',
-                            enabled: futsal.status == 'ACTIVE',
-                            child: Row(
-                              children: [
-                                Icon(Icons.sports_soccer, size: 18, color: futsal.status == 'ACTIVE' ? Colors.blue : Colors.grey),
-                                const SizedBox(width: 8),
-                                Text('Manage Courts', style: TextStyle(color: futsal.status == 'ACTIVE' ? Colors.black : Colors.grey)),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'view_bookings',
-                            enabled: futsal.status == 'ACTIVE',
-                            child: Row(
-                              children: [
-                                Icon(Icons.calendar_month, size: 18, color: futsal.status == 'ACTIVE' ? Colors.green : Colors.grey),
-                                const SizedBox(width: 8),
-                                Text('View Bookings', style: TextStyle(color: futsal.status == 'ACTIVE' ? Colors.black : Colors.grey)),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'view_reviews',
-                            enabled: futsal.status == 'ACTIVE',
-                            child: Row(
-                              children: [
-                                Icon(Icons.star, size: 18, color: futsal.status == 'ACTIVE' ? Colors.amber : Colors.grey),
-                                const SizedBox(width: 8),
-                                Text('View Reviews', style: TextStyle(color: futsal.status == 'ACTIVE' ? Colors.black : Colors.grey)),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Row(
-                              children: [
-                                Icon(Icons.edit, size: 18),
-                                SizedBox(width: 8),
-                                Text('Edit'),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            enabled: futsal.status == 'PENDING' && !hasCourts,
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete, size: 18, color: futsal.status == 'PENDING' && !hasCourts ? Colors.red : Colors.grey),
-                                const SizedBox(width: 8),
-                                Text('Delete', style: TextStyle(color: futsal.status == 'PENDING' && !hasCourts ? Colors.red : Colors.grey)),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'toggle_active',
-                            enabled: futsal.status == 'ACTIVE' || futsal.status == 'DEACTIVATED',
-                            child: Row(
-                              children: [
-                                Icon(futsal.status == 'ACTIVE' ? Icons.visibility_off : Icons.visibility, size: 18, color: futsal.status == 'ACTIVE' ? Colors.orange : Colors.green),
-                                const SizedBox(width: 8),
-                                Text(futsal.status == 'ACTIVE' ? 'Deactivate' : 'Activate'),
-                              ],
-                            ),
-                          ),
-                        ],
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildIconButton(
-                            icon: Icons.sports_soccer,
-                            onTap: onManageCourts,
-                            color: Colors.blue,
-                            enabled: futsal.status == 'ACTIVE',
-                          ),
-                          const SizedBox(width: 4),
-                          _buildIconButton(
-                            icon: Icons.calendar_month,
-                            onTap: onViewBookings,
-                            color: Colors.green,
-                            enabled: futsal.status == 'ACTIVE',
-                          ),
-                          const SizedBox(width: 4),
-                          _buildIconButton(
-                            icon: Icons.star,
-                            onTap: onViewReviews,
-                            color: Colors.amber,
-                            enabled: futsal.status == 'ACTIVE',
-                          ),
-                          const SizedBox(width: 4),
-                          _buildIconButton(
-                            icon: Icons.edit,
-                            onTap: onEdit,
-                            color: Colors.grey,
-                            enabled: true,
-                          ),
-                          if (futsal.status == 'ACTIVE' || futsal.status == 'DEACTIVATED')
-                            _buildIconButton(
-                              icon: futsal.status == 'ACTIVE' ? Icons.visibility_off : Icons.visibility,
-                              onTap: onToggleActive,
-                              color: futsal.status == 'ACTIVE' ? Colors.orange : Colors.green,
-                              enabled: true,
-                            ),
-                          if (futsal.status == 'PENDING' && !hasCourts)
-                            _buildIconButton(
-                              icon: Icons.delete,
-                              onTap: onDelete,
-                              color: Colors.red,
-                              enabled: true,
-                            ),
-                        ],
-                      ),
+                    ? _buildMobileActions(futsal, hasCourts, isActive, isDeactivated)
+                    : _buildDesktopActions(futsal, hasCourts, isActive, isDeactivated),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMobileActions(Futsal futsal, bool hasCourts, bool isActive, bool isDeactivated) {
+    return PopupMenuButton<String>(
+      iconSize: 22,
+      icon: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceLight,
+          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+        ),
+        child: const Icon(Icons.more_vert, color: AppTheme.textSecondary, size: 18),
+      ),
+      color: AppTheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        side: const BorderSide(color: AppTheme.surfaceBorder),
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 'edit':
+            onEdit();
+            break;
+          case 'delete':
+            onDelete();
+            break;
+          case 'manage_courts':
+            onManageCourts();
+            break;
+          case 'view_bookings':
+            onViewBookings();
+            break;
+          case 'view_reviews':
+            onViewReviews();
+            break;
+          case 'toggle_active':
+            onToggleActive();
+            break;
+        }
+      },
+      itemBuilder: (ctx) => [
+        _buildMenuItem('manage_courts', Icons.sports_soccer, 'Manage Courts', AppTheme.info, isActive),
+        _buildMenuItem('view_bookings', Icons.calendar_month, 'View Bookings', AppTheme.primary, isActive),
+        _buildMenuItem('view_reviews', Icons.star, 'View Reviews', AppTheme.warning, isActive),
+        _buildMenuItem('edit', Icons.edit, 'Edit', AppTheme.textSecondary, true),
+        if (futsal.status == 'PENDING' && !hasCourts)
+          _buildMenuItem('delete', Icons.delete, 'Delete', AppTheme.error, true),
+        if (isActive || isDeactivated)
+          _buildMenuItem(
+            'toggle_active',
+            isActive ? Icons.visibility_off : Icons.visibility,
+            isActive ? 'Deactivate' : 'Activate',
+            isActive ? AppTheme.warning : AppTheme.success,
+            true,
+          ),
+      ],
+    );
+  }
+
+  PopupMenuItem<String> _buildMenuItem(
+    String value,
+    IconData icon,
+    String label,
+    Color color,
+    bool enabled,
+  ) {
+    return PopupMenuItem(
+      value: value,
+      enabled: enabled,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: enabled ? color : AppTheme.textMuted),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: TextStyle(
+              color: enabled ? AppTheme.textPrimary : AppTheme.textMuted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopActions(Futsal futsal, bool hasCourts, bool isActive, bool isDeactivated) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildIconButton(
+          icon: Icons.sports_soccer,
+          onTap: onManageCourts,
+          color: AppTheme.info,
+          enabled: isActive,
+        ),
+        const SizedBox(width: 6),
+        _buildIconButton(
+          icon: Icons.calendar_month,
+          onTap: onViewBookings,
+          color: AppTheme.primary,
+          enabled: isActive,
+        ),
+        const SizedBox(width: 6),
+        _buildIconButton(
+          icon: Icons.star,
+          onTap: onViewReviews,
+          color: AppTheme.warning,
+          enabled: isActive,
+        ),
+        const SizedBox(width: 6),
+        _buildIconButton(
+          icon: Icons.edit,
+          onTap: onEdit,
+          color: AppTheme.textSecondary,
+          enabled: true,
+        ),
+        if (isActive || isDeactivated) ...[
+          const SizedBox(width: 6),
+          _buildIconButton(
+            icon: isActive ? Icons.visibility_off : Icons.visibility,
+            onTap: onToggleActive,
+            color: isActive ? AppTheme.warning : AppTheme.success,
+            enabled: true,
+          ),
+        ],
+        if (futsal.status == 'PENDING' && !hasCourts) ...[
+          const SizedBox(width: 6),
+          _buildIconButton(
+            icon: Icons.delete,
+            onTap: onDelete,
+            color: AppTheme.error,
+            enabled: true,
+          ),
+        ],
+      ],
     );
   }
 
@@ -306,17 +424,24 @@ class DashboardFutsalCard extends StatelessWidget {
   }) {
     return InkWell(
       onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: enabled ? color : Colors.grey.shade400,
+      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: enabled ? 1.0 : 0.4,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: enabled ? color.withOpacity(0.1) : AppTheme.surfaceLight,
+            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+            border: Border.all(
+              color: enabled ? color.withOpacity(0.3) : AppTheme.surfaceBorder,
+            ),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: enabled ? color : AppTheme.textMuted,
+          ),
         ),
       ),
     );

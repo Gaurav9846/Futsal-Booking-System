@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
+// Theme
+import 'utils/app_theme.dart';
 
 // Providers
 import 'providers/auth_provider.dart';
@@ -29,6 +33,18 @@ import 'screens/admin/system_settings_screen.dart';
 import 'screens/admin/admin_analytics_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set system UI overlay style for immersive experience
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: AppTheme.background,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
+  
   runApp(const MyApp());
 }
 
@@ -52,17 +68,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],
       child: MaterialApp(
-        title: 'Futsal Booking',
+        title: 'Futsal Arena',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.green,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        // Change this to test different screens
+        theme: AppTheme.darkTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.dark,
         home: const SplashScreen(),
-        // home: const LoginScreen(),
-        // home: const OwnerDashboard(),
-        // home: const PlayerHomeScreen(),
         
         routes: {
           '/login': (ctx) => const LoginScreen(),

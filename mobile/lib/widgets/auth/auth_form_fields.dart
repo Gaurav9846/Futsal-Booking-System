@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/app_theme.dart';
 
 class AuthFormFields extends StatefulWidget {
   final bool isLogin;
@@ -31,11 +32,8 @@ class AuthFormFields extends StatefulWidget {
 class _AuthFormFieldsState extends State<AuthFormFields> {
   bool _obscurePassword = true;
 
-  // --- Validation Logic ---
-
   String? _validateEmail(String? v) {
     if (v == null || v.isEmpty) return 'Email is required';
-    // RFC 5322 standard regex for email
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(v)) return 'Enter a valid email address';
     return null;
@@ -55,77 +53,43 @@ class _AuthFormFieldsState extends State<AuthFormFields> {
     return null;
   }
 
-  // --- Styling Helpers ---
-
   InputDecoration _buildInputDecoration({
     required String label,
     String? hint,
     required IconData icon,
-    String? errorText,
+    Widget? suffixIcon,
   }) {
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      prefixIcon: Icon(icon, color: Colors.green),
-      errorText: errorText,
+      prefixIcon: Icon(icon, color: AppTheme.primary, size: 22),
+      suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.grey.shade50,
-      errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 12),
+      fillColor: AppTheme.surfaceLight,
+      labelStyle: const TextStyle(color: AppTheme.textSecondary),
+      hintStyle: TextStyle(color: AppTheme.textMuted.withOpacity(0.5)),
+      errorStyle: const TextStyle(color: AppTheme.error, fontSize: 12),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        borderSide: const BorderSide(color: AppTheme.surfaceBorder),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        borderSide: const BorderSide(color: AppTheme.surfaceBorder),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.green, width: 2),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        borderSide: const BorderSide(color: AppTheme.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        borderSide: const BorderSide(color: AppTheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        borderSide: const BorderSide(color: AppTheme.error, width: 2),
       ),
-    );
-  }
-
-  InputDecoration _buildPasswordDecoration() {
-    return InputDecoration(
-      labelText: 'Password',
-      hintText: widget.isLogin ? 'Enter password' : 'Min. 6 characters',
-      prefixIcon: const Icon(Icons.lock_outline, color: Colors.green),
-      suffixIcon: IconButton(
-        icon: Icon(
-          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-          color: Colors.grey,
-        ),
-        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-      ),
-      filled: true,
-      fillColor: Colors.grey.shade50,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.green, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     );
   }
 
@@ -136,14 +100,14 @@ class _AuthFormFieldsState extends State<AuthFormFields> {
       children: [
         if (!widget.isLogin) ...[
           _buildNameField(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
         ],
         _buildEmailField(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         _buildPasswordField(),
         if (widget.isLogin) _buildLoginOptions(),
         if (!widget.isLogin) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           _buildRoleSelector(),
         ],
       ],
@@ -154,6 +118,7 @@ class _AuthFormFieldsState extends State<AuthFormFields> {
     return TextFormField(
       controller: widget.nameController,
       autovalidateMode: AutovalidateMode.onUserInteraction,
+      style: const TextStyle(color: AppTheme.textPrimary),
       decoration: _buildInputDecoration(
         label: 'Full Name',
         hint: 'Enter your full name',
@@ -170,6 +135,7 @@ class _AuthFormFieldsState extends State<AuthFormFields> {
       controller: widget.emailController,
       keyboardType: TextInputType.emailAddress,
       autovalidateMode: AutovalidateMode.onUserInteraction,
+      style: const TextStyle(color: AppTheme.textPrimary),
       decoration: _buildInputDecoration(
         label: 'Email Address',
         hint: 'example@gmail.com',
@@ -185,7 +151,20 @@ class _AuthFormFieldsState extends State<AuthFormFields> {
       controller: widget.passwordController,
       obscureText: _obscurePassword,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      decoration: _buildPasswordDecoration(),
+      style: const TextStyle(color: AppTheme.textPrimary),
+      decoration: _buildInputDecoration(
+        label: 'Password',
+        hint: widget.isLogin ? 'Enter password' : 'Min. 6 characters',
+        icon: Icons.lock_outline,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+            color: AppTheme.textMuted,
+            size: 22,
+          ),
+          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+        ),
+      ),
       validator: _validatePassword,
       textInputAction: TextInputAction.done,
     );
@@ -193,7 +172,7 @@ class _AuthFormFieldsState extends State<AuthFormFields> {
 
   Widget _buildLoginOptions() {
     return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
+      padding: const EdgeInsets.only(top: 12.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -205,20 +184,36 @@ class _AuthFormFieldsState extends State<AuthFormFields> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Checkbox(
-                    value: widget.rememberMe,
-                    onChanged: (_) => widget.onRememberMeChanged(),
-                    activeColor: Colors.green,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: widget.rememberMe 
+                          ? AppTheme.primary 
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: widget.rememberMe 
+                            ? AppTheme.primary 
+                            : AppTheme.surfaceBorder,
+                        width: 2,
+                      ),
                     ),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
+                    child: widget.rememberMe
+                        ? const Icon(
+                            Icons.check,
+                            size: 16,
+                            color: Colors.white,
+                          )
+                        : null,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   const Text(
                     'Remember me',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                    style: TextStyle(
+                      color: AppTheme.textSecondary, 
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
@@ -227,14 +222,14 @@ class _AuthFormFieldsState extends State<AuthFormFields> {
           TextButton(
             onPressed: widget.onForgotPassword,
             style: TextButton.styleFrom(
-              foregroundColor: Colors.green,
+              foregroundColor: AppTheme.primary,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               minimumSize: const Size(50, 30),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: const Text(
               'Forgot Password?',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -248,30 +243,97 @@ class _AuthFormFieldsState extends State<AuthFormFields> {
       children: [
         const Text(
           "Select Role",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: widget.selectedRole,
-          decoration: _buildInputDecoration(
-            label: 'Register as',
-            hint: null,
-            icon: Icons.supervised_user_circle_outlined,
+          style: TextStyle(
+            fontWeight: FontWeight.w600, 
+            color: AppTheme.textSecondary,
+            fontSize: 14,
           ),
-          items: const [
-            DropdownMenuItem(value: 'PLAYER', child: Text('Player')),
-            DropdownMenuItem(value: 'OWNER', child: Text('Futsal Owner')),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildRoleOption(
+                title: 'Player',
+                subtitle: 'Book courts',
+                icon: Icons.sports_soccer,
+                value: 'PLAYER',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildRoleOption(
+                title: 'Owner',
+                subtitle: 'Manage venue',
+                icon: Icons.business,
+                value: 'OWNER',
+              ),
+            ),
           ],
-          onChanged: (v) {
-            if (v != null) {
-              widget.onRoleChanged(v);
-            }
-          },
-          dropdownColor: Colors.white,
-          icon: const Icon(Icons.arrow_drop_down, color: Colors.green),
-          style: const TextStyle(color: Colors.black87),
         ),
       ],
+    );
+  }
+
+  Widget _buildRoleOption({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required String value,
+  }) {
+    final isSelected = widget.selectedRole == value;
+    
+    return GestureDetector(
+      onTap: () => widget.onRoleChanged(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? AppTheme.primary.withOpacity(0.1) 
+              : AppTheme.surfaceLight,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          border: Border.all(
+            color: isSelected ? AppTheme.primary : AppTheme.surfaceBorder,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? AppTheme.primary.withOpacity(0.2) 
+                    : AppTheme.surface,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? AppTheme.primary : AppTheme.textMuted,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

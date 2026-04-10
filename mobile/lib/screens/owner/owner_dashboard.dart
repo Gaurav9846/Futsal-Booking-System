@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/futsal_provider.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../models/futsal.dart';
+import '../../utils/app_theme.dart';
 import 'add_futsal_screen.dart';
 import 'court_management_screen.dart';
 import 'bookings_screen.dart';
@@ -372,55 +373,88 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         return false;
       },
       child: Scaffold(
+        backgroundColor: AppTheme.background,
         appBar: AppBar(
-  title: const Text('Dashboard'),
-  backgroundColor: Colors.green,
-  foregroundColor: Colors.white,
-  elevation: 0,
-  automaticallyImplyLeading: false,
-  actions: [
-    // Owner badge
-    Container(
-      margin: const EdgeInsets.only(right: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.amber.shade700,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white, width: 1),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.business, size: 16, color: Colors.white),
-          SizedBox(width: 4),
-          Text('OWNER',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12)),
-        ],
-      ),
-    ),
-    // Switch to player mode
-    IconButton(
-      icon: const Icon(Icons.sports_soccer, color: Colors.white, size: 24),
-      onPressed: () => Navigator.pushReplacementNamed(context, '/player/home'),
-      tooltip: 'Switch to Player Mode',
-    ),
-    // Refresh button
-    IconButton(
-      icon: const Icon(Icons.refresh, color: Colors.white, size: 24),
-      onPressed: _loadAllData,
-      tooltip: 'Refresh all data',
-    ),
-    // Logout button
-    IconButton(
-      icon: const Icon(Icons.logout, color: Colors.white, size: 24),
-      onPressed: _showLogoutConfirmation,
-      tooltip: 'Logout',
-    ),
-  ],
-),
+          title: const Text(
+            'Dashboard',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          backgroundColor: AppTheme.background,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          actions: [
+            // Owner badge
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppTheme.radiusRound),
+                border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.business, size: 16, color: AppTheme.accent),
+                  const SizedBox(width: 6),
+                  Text(
+                    'OWNER',
+                    style: TextStyle(
+                      color: AppTheme.accent,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Switch to player mode
+            Container(
+              margin: const EdgeInsets.only(right: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceLight,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                border: Border.all(color: AppTheme.surfaceBorder),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.sports_soccer, color: AppTheme.primary, size: 20),
+                onPressed: () => Navigator.pushReplacementNamed(context, '/player/home'),
+                tooltip: 'Switch to Player Mode',
+              ),
+            ),
+            // Refresh button
+            Container(
+              margin: const EdgeInsets.only(right: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceLight,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                border: Border.all(color: AppTheme.surfaceBorder),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.refresh, color: AppTheme.textSecondary, size: 20),
+                onPressed: _loadAllData,
+                tooltip: 'Refresh all data',
+              ),
+            ),
+            // Logout button
+            Container(
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                color: AppTheme.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+              ),
+              child: IconButton(
+                icon: Icon(Icons.logout, color: AppTheme.error, size: 20),
+                onPressed: _showLogoutConfirmation,
+                tooltip: 'Logout',
+              ),
+            ),
+          ],
+        ),
         body: RefreshIndicator(
           onRefresh: _loadAllData,
           child: _buildBody(futsalProvider, dashboardProvider),

@@ -3,14 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../utils/responsive.dart';
+import '../../utils/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/futsal_provider.dart';
 import '../../models/futsal.dart';
-import '../../models/user.dart';
 import 'futsal_details_screen.dart';
 import '../../providers/favorite_provider.dart';
 import 'home/widgets/filter_chips.dart';
-import 'home/widgets/banner_card.dart';
 import 'home/widgets/filter_panel.dart';
 import 'home/widgets/futsal_card.dart';
 import '../../widgets/profile/profile_dialog.dart';
@@ -49,21 +48,21 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
   final List<Map<String, String>> _banners = [
     {
       'title': 'Weekend Special',
-      'subtitle': '20% off on all bookings',
-      'image': '🎯',
-      'color': 'FF6B6B',
+      'subtitle': '20% off on all bookings this weekend',
+      'image': '?',
+      'color': '00D26A',
     },
     {
-      'title': 'New Venues',
-      'subtitle': 'Check out newly added futsals',
-      'image': '⚽',
-      'color': '4ECDC4',
+      'title': 'New Venues Added',
+      'subtitle': 'Check out newly added futsal courts',
+      'image': '?',
+      'color': 'FF6B35',
     },
     {
       'title': 'Tournament Season',
-      'subtitle': 'Book now for tournaments',
-      'image': '🏆',
-      'color': '45B7D1',
+      'subtitle': 'Book now for upcoming tournaments',
+      'image': '?',
+      'color': '2196F3',
     },
   ];
 
@@ -110,8 +109,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
 
     for (var futsal in futsalProvider.futsals) {
       final courtTypes = futsal.getCourtTypes();
-      filterSet
-          .addAll(courtTypes.map((t) => t == 'indoor' ? 'Indoor' : 'Outdoor'));
+      filterSet.addAll(courtTypes.map((t) => t == 'indoor' ? 'Indoor' : 'Outdoor'));
     }
 
     setState(() {
@@ -131,9 +129,19 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
       if (permission == LocationPermission.deniedForever) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Location permission denied. Enable in settings.'),
-              backgroundColor: Colors.red,
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.white, size: 20),
+                  SizedBox(width: 12),
+                  Text('Location permission denied. Enable in settings.'),
+                ],
+              ),
+              backgroundColor: AppTheme.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+              ),
             ),
           );
         }
@@ -152,9 +160,18 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Location set! Showing futsals within $_distanceRadius km'),
-            backgroundColor: Colors.green,
+            content: Row(
+              children: [
+                const Icon(Icons.location_on, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text('Showing futsals within $_distanceRadius km'),
+              ],
+            ),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            ),
           ),
         );
       }
@@ -162,8 +179,18 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not get location: $e'),
-            backgroundColor: Colors.red,
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Could not get location: $e')),
+              ],
+            ),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            ),
           ),
         );
       }
@@ -172,8 +199,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
     }
   }
 
-  double _calculateDistance(
-      double lat1, double lng1, double lat2, double lng2) {
+  double _calculateDistance(double lat1, double lng1, double lat2, double lng2) {
     const R = 6371.0;
     final dLat = (lat2 - lat1) * math.pi / 180;
     final dLng = (lng2 - lng1) * math.pi / 180;
@@ -243,19 +269,19 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
     final futsalProvider = Provider.of<FutsalProvider>(context);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AppTheme.background,
       body: RefreshIndicator(
+        color: AppTheme.primary,
+        backgroundColor: AppTheme.surface,
         onRefresh: () async {
-          final futsalProvider =
-              Provider.of<FutsalProvider>(context, listen: false);
+          final futsalProvider = Provider.of<FutsalProvider>(context, listen: false);
           final auth = Provider.of<AuthProvider>(context, listen: false);
 
           await futsalProvider.fetchFutsals();
           _updateFilters();
 
           if (auth.isAuthenticated) {
-            await Provider.of<FavoriteProvider>(context, listen: false)
-                .loadFavorites();
+            await Provider.of<FavoriteProvider>(context, listen: false).loadFavorites();
           }
         },
         child: CustomScrollView(
@@ -274,7 +300,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
               },
             ),
 
-            // Search Bar - Responsive padding
+            // Search Bar
             SliverToBoxAdapter(
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -285,7 +311,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
                   ),
                   child: CustomSearchBar(
                     controller: _searchController,
-                    hintText: 'Search by name or location...',
+                    hintText: 'Search venues by name or location...',
                     onChanged: (value) {
                       setState(() {
                         _searchQuery = value;
@@ -304,39 +330,99 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
 
             // Filter Panel
             SliverToBoxAdapter(
-              child: _showFilters
-                  ? Padding(
-                      padding: Responsive.getScreenPadding(context),
-                      child: FilterPanel(
-                        userPosition: _userPosition,
-                        isGettingLocation: _isGettingLocation,
-                        distanceRadius: _distanceRadius,
-                        onGetLocation: _getUserLocation,
-                        onDistanceChanged: (value) {
-                          setState(() {
-                            _distanceRadius = value;
-                          });
-                        },
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                height: _showFilters ? null : 0,
+                child: _showFilters
+                    ? Padding(
+                        padding: Responsive.getScreenPadding(context),
+                        child: FilterPanel(
+                          userPosition: _userPosition,
+                          isGettingLocation: _isGettingLocation,
+                          distanceRadius: _distanceRadius,
+                          onGetLocation: _getUserLocation,
+                          onDistanceChanged: (value) {
+                            setState(() {
+                              _distanceRadius = value;
+                            });
+                          },
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ),
 
-            // Banner Section - Responsive height
+            // Section Header - Featured
             SliverToBoxAdapter(
-              child: SizedBox(
-                height: Responsive.getBannerHeight(context),
-                child: BannerCarousel(
-                  banners: _banners,
-                  pageController: _bannerController,
-                  onPageChanged: (index) {
-                    // Optional: handle page change if needed
-                  },
+              child: Padding(
+                padding: Responsive.getScreenPadding(context).copyWith(
+                  top: 16,
+                  bottom: 8,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Featured',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {},
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'View All',
+                            style: TextStyle(
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.arrow_forward, size: 16, color: AppTheme.primary),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-            // Filter Chips - Responsive padding
+            // Banner Section
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: Responsive.getBannerHeight(context) + 40,
+                child: BannerCarousel(
+                  banners: _banners,
+                  pageController: _bannerController,
+                  onPageChanged: (index) {},
+                ),
+              ),
+            ),
+
+            // Section Header - Browse Venues
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: Responsive.getScreenPadding(context).copyWith(
+                  top: 16,
+                  bottom: 8,
+                ),
+                child: const Text(
+                  'Browse Venues',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+
+            // Filter Chips
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -352,8 +438,13 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
               ),
             ),
 
-            // Responsive Futsals Grid - Using GridView for proper layout
+            // Futsals Grid
             _buildResponsiveFutsalsGrid(futsalProvider),
+            
+            // Bottom spacing
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 24),
+            ),
           ],
         ),
       ),
@@ -361,128 +452,147 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen>
   }
 
   Widget _buildResponsiveFutsalsGrid(FutsalProvider provider) {
-  if (provider.isLoading && provider.futsals.isEmpty) {
-    return const SliverFillRemaining(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Loading futsals...'),
-          ],
+    if (provider.isLoading && provider.futsals.isEmpty) {
+      return SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Loading venues...',
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (provider.error != null) {
+      return SliverFillRemaining(
+        child: EmptyState.error(
+          provider.error!,
+          onRetry: _loadFutsals,
+        ),
+      );
+    }
+
+    final filteredList = _filteredFutsals;
+
+    if (filteredList.isEmpty) {
+      return SliverFillRemaining(
+        child: _searchQuery.isEmpty
+            ? EmptyState.noFutsals()
+            : EmptyState.noSearchResults(
+                onClearFilters: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = '';
+                    _selectedFilter = 'All';
+                  });
+                },
+              ),
+      );
+    }
+
+    final isDesktop = Responsive.isDesktop(context);
+    final isTablet = Responsive.isTablet(context);
+
+    int crossAxisCount;
+    double crossAxisSpacing;
+    double mainAxisSpacing;
+    double horizontalPadding;
+
+    if (isDesktop) {
+      crossAxisCount = 3;
+      crossAxisSpacing = 20;
+      mainAxisSpacing = 20;
+      horizontalPadding = 32;
+    } else if (isTablet) {
+      crossAxisCount = 2;
+      crossAxisSpacing = 16;
+      mainAxisSpacing = 16;
+      horizontalPadding = 24;
+    } else {
+      crossAxisCount = 1;
+      crossAxisSpacing = 0;
+      mainAxisSpacing = 16;
+      horizontalPadding = 16;
+    }
+
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, rowIndex) {
+            final startIndex = rowIndex * crossAxisCount;
+            final endIndex = startIndex + crossAxisCount;
+
+            if (startIndex >= filteredList.length) return null;
+
+            final rowItems = filteredList.sublist(
+              startIndex,
+              endIndex > filteredList.length ? filteredList.length : endIndex,
+            );
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: mainAxisSpacing),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (int i = 0; i < rowItems.length; i++)
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: i < rowItems.length - 1 ? crossAxisSpacing : 0,
+                        ),
+                        child: FutsalCard(
+                          futsal: rowItems[i],
+                          onTap: () => _navigateToDetails(rowItems[i]),
+                        ),
+                      ),
+                    ),
+                  for (int i = rowItems.length; i < crossAxisCount; i++)
+                    const Expanded(child: SizedBox.shrink()),
+                ],
+              ),
+            );
+          },
+          childCount: (filteredList.length / crossAxisCount).ceil(),
         ),
       ),
     );
   }
 
-  if (provider.error != null) {
-    return SliverFillRemaining(
-      child: EmptyState.error(
-        provider.error!,
-        onRetry: _loadFutsals,
-      ),
-    );
-  }
-
-  final filteredList = _filteredFutsals;
-
-  if (filteredList.isEmpty) {
-    return SliverFillRemaining(
-      child: _searchQuery.isEmpty
-          ? EmptyState.noFutsals()
-          : EmptyState.noSearchResults(
-              onClearFilters: () {
-                _searchController.clear();
-                setState(() {
-                  _searchQuery = '';
-                  _selectedFilter = 'All';
-                });
-              },
-            ),
-    );
-  }
-
-  // Get responsive grid settings
-  final isDesktop = Responsive.isDesktop(context);
-  final isTablet = Responsive.isTablet(context);
-  
-  int crossAxisCount;
-  double crossAxisSpacing;
-  double mainAxisSpacing;
-  double horizontalPadding;
-  
-  if (isDesktop) {
-    crossAxisCount = 3;
-    crossAxisSpacing = 20;
-    mainAxisSpacing = 20;
-    horizontalPadding = 32;
-  } else if (isTablet) {
-    crossAxisCount = 2;
-    crossAxisSpacing = 16;
-    mainAxisSpacing = 16;
-    horizontalPadding = 24;
-  } else {
-    crossAxisCount = 1;
-    crossAxisSpacing = 0;
-    mainAxisSpacing = 12;
-    horizontalPadding = 16;
-  }
-
-  // Use SliverList with Row for dynamic heights (no forced aspect ratio)
-  return SliverPadding(
-    padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
-    sliver: SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, rowIndex) {
-          // Calculate items for this row
-          final startIndex = rowIndex * crossAxisCount;
-          final endIndex = startIndex + crossAxisCount;
-          
-          if (startIndex >= filteredList.length) return null;
-          
-          final rowItems = filteredList.sublist(
-            startIndex,
-            endIndex > filteredList.length ? filteredList.length : endIndex,
-          );
-          
-          return Padding(
-            padding: EdgeInsets.only(bottom: mainAxisSpacing),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (int i = 0; i < rowItems.length; i++)
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        right: i < rowItems.length - 1 ? crossAxisSpacing : 0,
-                      ),
-                      child: FutsalCard(
-                        futsal: rowItems[i],
-                        onTap: () => _navigateToDetails(rowItems[i]),
-                      ),
-                    ),
-                  ),
-                // Add empty placeholders to maintain row structure
-                for (int i = rowItems.length; i < crossAxisCount; i++)
-                  Expanded(child: SizedBox.shrink()),
-              ],
-            ),
-          );
-        },
-        childCount: (filteredList.length / crossAxisCount).ceil(),
-      ),
-    ),
-  );
-}
-
   void _navigateToDetails(Futsal futsal) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (!auth.isAuthenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in to book a futsal'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.white, size: 20),
+              SizedBox(width: 12),
+              Text('Please log in to book a futsal'),
+            ],
+          ),
+          backgroundColor: AppTheme.warning,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          ),
         ),
       );
       return;

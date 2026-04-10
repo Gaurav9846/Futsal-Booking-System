@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_theme.dart';
 
 class CustomSearchBar extends StatelessWidget {
   final TextEditingController controller;
@@ -18,31 +19,61 @@ class CustomSearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(color: AppTheme.surfaceBorder, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
-            offset: const Offset(0, 5),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: TextField(
         controller: controller,
+        style: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontSize: 15,
+        ),
         decoration: InputDecoration(
           hintText: hintText,
-          prefixIcon: const Icon(Icons.search, color: Colors.green),
+          hintStyle: TextStyle(
+            color: AppTheme.textMuted.withOpacity(0.5),
+            fontSize: 15,
+          ),
+          prefixIcon: Container(
+            padding: const EdgeInsets.all(12),
+            child: const Icon(
+              Icons.search,
+              color: AppTheme.primary,
+              size: 22,
+            ),
+          ),
           suffixIcon: controller.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
-                  onPressed: onClear,
+              ? Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  child: IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceLight,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: AppTheme.textMuted,
+                        size: 16,
+                      ),
+                    ),
+                    onPressed: onClear,
+                  ),
                 )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
-            vertical: 15,
+            vertical: 16,
           ),
         ),
         onChanged: onChanged,

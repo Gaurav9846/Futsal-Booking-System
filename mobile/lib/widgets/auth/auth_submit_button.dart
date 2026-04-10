@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/app_theme.dart';
 
 class AuthSubmitButton extends StatelessWidget {
   final bool isLoading;
@@ -20,35 +21,49 @@ class AuthSubmitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       width: width ?? double.infinity,
-      height: height ?? 50,
+      height: height ?? 56,
+      decoration: BoxDecoration(
+        gradient: isLoading ? null : AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        boxShadow: isLoading ? [] : AppTheme.primaryShadow,
+        color: isLoading ? AppTheme.surfaceLight : null,
+      ),
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
+          shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           ),
-          disabledBackgroundColor: Colors.green.withOpacity(0.5),
-          elevation: isLoading ? 0 : 2,
+          elevation: 0,
         ),
         child: isLoading
             ? const SizedBox(
-                height: 20,
-                width: 20,
+                height: 24,
+                width: 24,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
+                  strokeWidth: 2.5,
+                  color: AppTheme.primary,
                 ),
               )
-            : Text(
-                isLogin ? 'Login' : 'Create Account',
-                style: TextStyle(
-                  fontSize: fontSize ?? 16,
-                  fontWeight: FontWeight.bold,
-                ),
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    isLogin ? 'Sign In' : 'Create Account',
+                    style: TextStyle(
+                      fontSize: fontSize ?? 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward, size: 20),
+                ],
               ),
       ),
     );
