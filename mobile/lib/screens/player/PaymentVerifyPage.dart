@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import '../../services/payment_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/booking_provider.dart';
 import 'dart:html' as html;
 
 class PaymentVerifyPage extends StatefulWidget {
@@ -13,7 +14,9 @@ class PaymentVerifyPage extends StatefulWidget {
 class _PaymentVerifyPageState extends State<PaymentVerifyPage> {
   bool _isVerifying = true;
   bool _success = false;
+  bool _convertedToCOD = false;
   String _message = '';
+  int? _bookingId;
 
   @override
   void initState() {
@@ -31,6 +34,19 @@ class _PaymentVerifyPageState extends State<PaymentVerifyPage> {
   Future<void> _verifyPaymentFromUrl() async {
     final uri = Uri.base;
     final pidx = uri.queryParameters['pidx'];
+    final bookingId = uri.queryParameters['booking_id'];
+    final convertedToCOD = uri.queryParameters['converted_to_cod'] == 'true';
+
+    if (convertedToCOD) {
+      setState(() {
+        _isVerifying = false;
+        _success = false;
+        _convertedToCOD = true;
+        _message = 'Payment failed. Your booking has been converted to Cash on Delivery. Please pay at the venue.';
+        _bookingId = bookingId != null ? int.tryParse(bookingId) : null;
+      });
+      return;
+    }
 
     if (pidx == null) {
       setState(() {
@@ -42,26 +58,32 @@ class _PaymentVerifyPageState extends State<PaymentVerifyPage> {
     }
 
     try {
-      final response = await PaymentService.verifyPayment(pidx);
+      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+      final response = await bookingProvider.verifyKhaltiPayment(pidx);
 
       if (!mounted) return;
 
-      if (response['status'] == 'success' && response['paymentStatus'] == 'COMPLETED') {
+      if (response['success'] == true) {
         setState(() {
           _isVerifying = false;
           _success = true;
           _message = 'Payment successful! Your booking is confirmed.';
+          _bookingId = response['bookingId'];
         });
-
-        // Redirect to home after short delay
-        Future.delayed(const Duration(seconds: 2), () {
-          html.window.location.href = '/player/home'; // or your route
+      } else if (response['convertedToCOD'] == true) {
+        setState(() {
+          _isVerifying = false;
+          _success = false;
+          _convertedToCOD = true;
+          _message = response['message'] ?? 'Payment failed. Booking converted to COD. Please pay at venue.';
+          _bookingId = response['bookingId'];
         });
       } else {
         setState(() {
           _isVerifying = false;
           _success = false;
           _message = response['message'] ?? 'Payment verification failed.';
+          _bookingId = response['bookingId'];
         });
       }
     } catch (e) {
@@ -78,7 +100,7 @@ class _PaymentVerifyPageState extends State<PaymentVerifyPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verifying Payment'),
+        title: const Text('Payment Status'),
         backgroundColor: Colors.green,
       ),
       body: Center(
@@ -95,20 +117,31 @@ class _PaymentVerifyPageState extends State<PaymentVerifyPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    _success ? Icons.check_circle_outline : Icons.error_outline,
-                    color: _success ? Colors.green : Colors.red,
+                    _success 
+                        ? Icons.check_circle_outline 
+                        : (_convertedToCOD ? Icons.payment : Icons.error_outline),
+                    color: _success 
+                        ? Colors.green 
+                        : (_convertedToCOD ? Colors.orange : Colors.red),
                     size: 80,
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    _message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      _message,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
-                      html.window.location.href = '/player/home';
+                      if (kIsWeb) {
+                        html.window.location.href = '/player/home';
+                      } else {
+                        Navigator.pushReplacementNamed(context, '/player/home');
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,

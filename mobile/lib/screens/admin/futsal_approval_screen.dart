@@ -224,45 +224,11 @@ class _FutsalApprovalScreenState extends State<FutsalApprovalScreen> {
                                         style: const TextStyle(fontSize: 13),
                                       ),
                                       const Spacer(),
-                                      Text(
-                                        'रू ${court['basePrice']}',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.green.shade700,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      if (court['peakPrice'] != null)
-                                        Text(
-                                          ' / रू ${court['peakPrice']} peak',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.orange.shade700,
-                                          ),
-                                        ),
                                     ],
                                   ),
                                 );
                               }).toList(),
                             ],
-
-                            const SizedBox(height: 12),
-
-                            // Base price
-                            Row(
-                              children: [
-                                Icon(Icons.currency_rupee,
-                                    size: 16, color: Colors.green.shade600),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Base Price: रू ${futsal['basePrice']}/hr',
-                                  style: TextStyle(
-                                    color: Colors.green.shade700,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
 
                             const SizedBox(height: 12),
 

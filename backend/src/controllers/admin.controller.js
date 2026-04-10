@@ -8,16 +8,15 @@ export const getDashboardStats = async (req, res, next) => {
     const totalUsers = await prisma.user.count();
 
     const totalFutsals = await prisma.futsal.count({
-      where: { isApproved: true },
+      where: { status: 'ACTIVE' },
     });
 
     const pendingFutsals = await prisma.futsal.count({
-      where: { isApproved: false },
+      where: { status: 'PENDING' },
     });
 
     const totalBookings = await prisma.booking.count();
 
-    // Add after totalBookings
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -38,6 +37,7 @@ export const getDashboardStats = async (req, res, next) => {
         status: { in: ["CONFIRMED", "COMPLETED"] },
       },
     });
+    
     const recentBookings = await prisma.booking.findMany({
       orderBy: { bookingDate: "desc" },
       take: 5,
@@ -114,7 +114,7 @@ export const approveOwner = async (req, res, next) => {
 export const getPendingFutsals = async (req, res, next) => {
   try {
     const futsals = await prisma.futsal.findMany({
-      where: { isApproved: false },
+      where: { status: 'PENDING' },
       include: {
         owner: {
           select: { id: true, fullName: true, email: true, phoneNumber: true },
@@ -130,6 +130,7 @@ export const getPendingFutsals = async (req, res, next) => {
           },
         },
       },
+      orderBy: { createdAt: "desc" },
     });
 
     res.json({ status: "success", data: futsals });
@@ -149,6 +150,7 @@ export const approveFutsal = async (req, res, next) => {
       where: { id: futsalId },
       data: {
         isApproved: true,
+        status: 'ACTIVE',
       },
     });
 
@@ -182,23 +184,45 @@ export const rejectFutsal = async (req, res, next) => {
   }
 };
 
+/**
+ * Get All Futsals (for admin)
+ */
 export const getAllFutsals = async (req, res, next) => {
   try {
     const futsals = await prisma.futsal.findMany({
       include: {
         owner: { select: { id: true, fullName: true, email: true } },
+        courts: {
+          select: {
+            id: true,
+            courtNumber: true,
+            courtType: true,
+            basePrice: true,
+            isActive: true,
+          },
+        },
+        _count: {
+          select: { courts: true },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    console.log("👑 All Futsals:", futsals);
+    // Add court count to each futsal
+    const futsalsWithCount = futsals.map(futsal => ({
+      ...futsal,
+      courtCount: futsal._count?.courts || 0,
+    }));
 
-    res.json({ status: "success", data: futsals });
+    res.json({ status: "success", data: futsalsWithCount });
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * Toggle User Active Status
+ */
 export const toggleUserStatus = async (req, res, next) => {
   try {
     const userId = parseInt(req.params.id);
@@ -215,6 +239,9 @@ export const toggleUserStatus = async (req, res, next) => {
   }
 };
 
+/**
+ * Generate Report
+ */
 export const generateReport = async (req, res, next) => {
   try {
     const { type, from, to } = req.query;
@@ -225,12 +252,35 @@ export const generateReport = async (req, res, next) => {
     if (type === "bookings") {
       data = await prisma.booking.findMany({
         where: { bookingDate: { gte: fromDate, lte: toDate } },
+        include: {
+          user: { select: { fullName: true, email: true } },
+          slot: {
+            include: {
+              court: {
+                include: { futsal: { select: { name: true } } }
+              }
+            }
+          }
+        },
       });
     } else if (type === "revenue") {
       data = await prisma.payment.findMany({
         where: {
           createdAt: { gte: fromDate, lte: toDate },
           status: "COMPLETED",
+        },
+        include: {
+          booking: {
+            include: {
+              slot: {
+                include: {
+                  court: {
+                    include: { futsal: { select: { name: true } } }
+                  }
+                }
+              }
+            }
+          }
         },
       });
     }
@@ -240,7 +290,6 @@ export const generateReport = async (req, res, next) => {
     next(error);
   }
 };
-
 
 /**
  * Get All Bookings
@@ -348,12 +397,30 @@ export const getAdminAnalytics = async (req, res, next) => {
     });
 
     // Top futsals by bookings
-    const topFutsals = await prisma.booking.groupBy({
+    const topFutsalsData = await prisma.booking.groupBy({
       by: ['slotId'],
       _count: { id: true },
       orderBy: { _count: { id: 'desc' } },
       take: 5,
     });
+
+    // Get futsal names for top bookings
+    const topFutsals = await Promise.all(
+      topFutsalsData.map(async (item) => {
+        const slot = await prisma.timeSlot.findUnique({
+          where: { id: item.slotId },
+          include: {
+            court: {
+              include: { futsal: { select: { name: true } } }
+            }
+          }
+        });
+        return {
+          futsalName: slot?.court?.futsal?.name || 'Unknown',
+          bookings: item._count.id,
+        };
+      })
+    );
 
     // Total stats
     const totalBookings = await prisma.booking.count();
@@ -369,11 +436,85 @@ export const getAdminAnalytics = async (req, res, next) => {
       status: 'success',
       weeklyRevenue,
       bookingsByStatus,
+      topFutsals,
       totalBookings,
       totalRevenue: totalRevenue._sum.totalPrice || 0,
       activeUsers,
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get Admin Profile
+ */
+export const getAdminProfile = async (req, res, next) => {
+  try {
+    const adminId = req.user.id;
+
+    const admin = await prisma.user.findUnique({
+      where: { id: adminId },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        createdAt: true,
+        // Remove profileImage
+      },
+    });
+
+    if (!admin) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Admin not found',
+      });
+    }
+
+    res.json({
+      status: 'success',
+      data: admin,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update Admin Profile
+ */
+export const updateAdminProfile = async (req, res, next) => {
+  try {
+    const adminId = req.user.id;
+    const { fullName, phoneNumber } = req.body;
+
+    // Update only provided fields
+    const updateData = {};
+    if (fullName !== undefined) updateData.fullName = fullName;
+    if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+
+    const updatedAdmin = await prisma.user.update({
+      where: { id: adminId },
+      data: updateData,
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    res.json({
+      status: 'success',
+      message: 'Profile updated successfully',
+      data: updatedAdmin,
+    });
+  } catch (error) {
+    console.error('❌ Update Profile Error:', error);
     next(error);
   }
 };

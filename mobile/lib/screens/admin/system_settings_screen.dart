@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/settings_provider.dart';
 
 class SystemSettingsScreen extends StatefulWidget {
   const SystemSettingsScreen({super.key});
@@ -8,13 +10,13 @@ class SystemSettingsScreen extends StatefulWidget {
 }
 
 class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
-  // Settings state
-  bool _autoApproveOwners = false;
-  bool _autoApproveFutsals = false;
-  bool _maintenanceMode = false;
-  int _bookingCancellationHours = 2;
-  int _slotLockMinutes = 5;
-  int _slotGenerationDays = 30;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<SettingsProvider>(context, listen: false).loadSettings();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,136 +26,262 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () =>
+                Provider.of<SettingsProvider>(context, listen: false)
+                    .loadSettings(),
+            tooltip: 'Refresh',
+          ),
+        ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Info banner
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.blue.shade700),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'These settings control platform-wide behavior. Changes take effect immediately.',
-                    style: TextStyle(
-                        fontSize: 13, color: Colors.blue.shade700),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Approval settings
-          _buildSectionHeader('Approval Settings'),
-          _buildSwitchTile(
-            title: 'Auto-approve Owner Registrations',
-            subtitle:
-                'Owners are approved automatically without admin review',
-            value: _autoApproveOwners,
-            onChanged: (v) => setState(() => _autoApproveOwners = v),
-            icon: Icons.person_add,
-            color: Colors.orange,
-          ),
-          _buildSwitchTile(
-            title: 'Auto-approve Futsal Listings',
-            subtitle: 'Futsal listings go live without admin review',
-            value: _autoApproveFutsals,
-            onChanged: (v) => setState(() => _autoApproveFutsals = v),
-            icon: Icons.sports_soccer,
-            color: Colors.green,
-          ),
-
-          const SizedBox(height: 16),
-
-          // Booking settings
-          _buildSectionHeader('Booking Settings'),
-          _buildStepperTile(
-            title: 'Cancellation Window',
-            subtitle: 'Hours before slot when cancellation is allowed',
-            value: _bookingCancellationHours,
-            min: 1,
-            max: 24,
-            unit: 'hours',
-            icon: Icons.cancel_outlined,
-            color: Colors.red,
-            onChanged: (v) =>
-                setState(() => _bookingCancellationHours = v),
-          ),
-          _buildStepperTile(
-            title: 'Slot Lock Duration',
-            subtitle:
-                'Minutes a slot stays locked during payment process',
-            value: _slotLockMinutes,
-            min: 1,
-            max: 15,
-            unit: 'minutes',
-            icon: Icons.lock_clock,
-            color: Colors.purple,
-            onChanged: (v) => setState(() => _slotLockMinutes = v),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Slot generation settings
-          _buildSectionHeader('Slot Generation'),
-          _buildStepperTile(
-            title: 'Advance Slot Generation',
-            subtitle: 'How many days ahead slots are auto-generated',
-            value: _slotGenerationDays,
-            min: 7,
-            max: 60,
-            unit: 'days',
-            icon: Icons.calendar_month,
-            color: Colors.blue,
-            onChanged: (v) => setState(() => _slotGenerationDays = v),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Maintenance mode
-          _buildSectionHeader('Platform'),
-          _buildSwitchTile(
-            title: 'Maintenance Mode',
-            subtitle:
-                'Temporarily disable all bookings for platform maintenance',
-            value: _maintenanceMode,
-            onChanged: (v) => setState(() => _maintenanceMode = v),
-            icon: Icons.build,
-            color: Colors.red,
-            isDestructive: true,
-          ),
-
-          const SizedBox(height: 24),
-
-          // Save button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.save),
-              label: const Text('Save Settings',
-                  style: TextStyle(fontSize: 16)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+      body: Consumer<SettingsProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: Colors.green),
+                  SizedBox(height: 16),
+                  Text('Loading settings...'),
+                ],
               ),
-              onPressed: _saveSettings,
+            );
+          }
+
+          if (provider.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline,
+                      size: 48, color: Colors.red.shade300),
+                  const SizedBox(height: 16),
+                  Text(
+                    provider.error!,
+                    style: TextStyle(color: Colors.grey.shade600),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => provider.loadSettings(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildInfoBanner(),
+              const SizedBox(height: 20),
+              _buildApprovalSettings(provider),
+              const SizedBox(height: 16),
+              _buildBookingSettings(provider),
+              const SizedBox(height: 16),
+              _buildSlotGenerationSettings(provider),
+              const SizedBox(height: 16),
+              _buildPlatformSettings(provider),
+              const SizedBox(height: 24),
+              _buildSaveButton(provider),
+              const SizedBox(height: 40),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildInfoBanner() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.blue.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.blue.shade700),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'These settings control platform-wide behavior. Changes take effect immediately.',
+              style: TextStyle(fontSize: 13, color: Colors.blue.shade700),
             ),
           ),
+        ],
+      ),
+    );
+  }
 
-          const SizedBox(height: 40),
+  Widget _buildApprovalSettings(SettingsProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('Approval Settings'),
+        _buildSwitchTile(
+          title: 'Auto-approve Owner Registrations',
+          subtitle: 'Owners are approved automatically without admin review',
+          value: provider.autoApproveOwners,
+          onChanged: (v) => provider.setAutoApproveOwners(v),
+          icon: Icons.person_add,
+          color: Colors.orange,
+        ),
+        _buildSwitchTile(
+          title: 'Auto-approve Futsal Listings',
+          subtitle: 'Futsal listings go live without admin review',
+          value: provider.autoApproveFutsals,
+          onChanged: (v) => provider.setAutoApproveFutsals(v),
+          icon: Icons.sports_soccer,
+          color: Colors.green,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBookingSettings(SettingsProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('Booking Settings'),
+        _buildStepperTile(
+          title: 'Cancellation Window',
+          subtitle: 'Hours before slot when cancellation is allowed',
+          value: provider.bookingCancellationHours,
+          min: 1,
+          max: 24,
+          unit: 'hours',
+          icon: Icons.cancel_outlined,
+          color: Colors.red,
+          onChanged: (v) => provider.setBookingCancellationHours(v), // ✅ Fixed
+        ),
+        _buildStepperTile(
+          title: 'Slot Lock Duration',
+          subtitle: 'Minutes a slot stays locked during payment process',
+          value: provider.slotLockMinutes,
+          min: 1,
+          max: 15,
+          unit: 'minutes',
+          icon: Icons.lock_clock,
+          color: Colors.purple,
+          onChanged: (v) => provider.setSlotLockMinutes(v), // ✅ Fixed
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSlotGenerationSettings(SettingsProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('Slot Generation'),
+        _buildStepperTile(
+          title: 'Advance Slot Generation',
+          subtitle: 'How many days ahead slots are auto-generated',
+          value: provider.slotGenerationDays,
+          min: 7,
+          max: 60,
+          unit: 'days',
+          icon: Icons.calendar_month,
+          color: Colors.blue,
+          onChanged: (v) => provider.setSlotGenerationDays(v), // ✅ Fixed
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlatformSettings(SettingsProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('Platform'),
+        _buildSwitchTile(
+          title: 'Maintenance Mode',
+          subtitle: 'Temporarily disable all bookings for platform maintenance',
+          value: provider.maintenanceMode,
+          onChanged: (v) => provider.setMaintenanceMode(v), // ✅ Fixed
+          icon: Icons.build,
+          color: Colors.red,
+          isDestructive: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSaveButton(SettingsProvider provider) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        icon: provider.isSaving
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white),
+              )
+            : const Icon(Icons.save),
+        label: Text(
+          provider.isSaving ? 'Saving...' : 'Save Settings',
+          style: const TextStyle(fontSize: 16),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: provider.isSaving ? null : () => _saveSettings(provider),
+      ),
+    );
+  }
+
+  Future<void> _saveSettings(SettingsProvider provider) async {
+    final success = await provider.saveSettings();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success
+              ? 'Settings saved successfully'
+              : 'Failed to save settings'),
+          backgroundColor: success ? Colors.green : Colors.red,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+
+      if (success) {
+        // Optional: Show restart required message if maintenance mode changed
+        if (provider.maintenanceMode) {
+          _showMaintenanceModeDialog();
+        }
+      }
+    }
+  }
+
+  void _showMaintenanceModeDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Maintenance Mode Active'),
+        content: const Text(
+          'Maintenance mode is now active. Users will not be able to make new bookings until you disable this setting.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
         ],
       ),
     );
@@ -248,12 +376,10 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style:
-                          const TextStyle(fontWeight: FontWeight.w500)),
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -263,9 +389,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                 IconButton(
                   icon: const Icon(Icons.remove_circle_outline),
                   color: value > min ? color : Colors.grey,
-                  onPressed: value > min
-                      ? () => onChanged(value - 1)
-                      : null,
+                  onPressed: value > min ? () => onChanged(value - 1) : null,
                 ),
                 Text(
                   '$value $unit',
@@ -278,25 +402,12 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                 IconButton(
                   icon: const Icon(Icons.add_circle_outline),
                   color: value < max ? color : Colors.grey,
-                  onPressed: value < max
-                      ? () => onChanged(value + 1)
-                      : null,
+                  onPressed: value < max ? () => onChanged(value + 1) : null,
                 ),
               ],
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _saveSettings() {
-    // For now show a snackbar — backend integration can be added later
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Settings saved successfully'),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
       ),
     );
   }

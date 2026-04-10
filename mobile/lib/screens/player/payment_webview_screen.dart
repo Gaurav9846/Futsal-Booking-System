@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import '../../services/payment_service.dart';
+import '../../providers/booking_provider.dart';
 
 class KhaltiPaymentScreen extends StatefulWidget {
   final String paymentUrl;
   final String pidx;
+  final int bookingId; // Add bookingId to update status
 
   const KhaltiPaymentScreen({
     super.key,
     required this.paymentUrl,
     required this.pidx,
+    required this.bookingId, // Now required
   });
 
   @override
@@ -18,6 +21,7 @@ class KhaltiPaymentScreen extends StatefulWidget {
 
 class _KhaltiPaymentScreenState extends State<KhaltiPaymentScreen> {
   late final WebViewController _controller;
+  bool _isVerifying = false;
 
   @override
   void initState() {
@@ -28,8 +32,9 @@ class _KhaltiPaymentScreenState extends State<KhaltiPaymentScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (request) async {
-            // 🔥 Detect Khalti redirect
-            if (request.url.contains('payment-verify')) {
+            if (request.url.contains('callback') || 
+                request.url.contains('payment-status') ||
+                request.url.contains('success')) {
               await _verifyPayment();
               return NavigationDecision.prevent;
             }
@@ -41,12 +46,24 @@ class _KhaltiPaymentScreenState extends State<KhaltiPaymentScreen> {
   }
 
   Future<void> _verifyPayment() async {
-    final response = await PaymentService.verifyPayment(widget.pidx);
-    if (!mounted) return;
+    if (_isVerifying) return;
+    _isVerifying = true;
 
-    if (response['status'] == 'success') {
-      Navigator.pop(context, true); // success
-    } else {
+    try {
+      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+      final response = await bookingProvider.verifyKhaltiPayment(widget.pidx);
+      
+      if (!mounted) return;
+
+      if (response['success'] == true || response['status'] == 'success') {
+        // Also update the booking status locally
+        await bookingProvider.loadUserBookings();
+        Navigator.pop(context, true); // success
+      } else {
+        Navigator.pop(context, false); // failed
+      }
+    } catch (e) {
+      if (!mounted) return;
       Navigator.pop(context, false); // failed
     }
   }
@@ -54,7 +71,11 @@ class _KhaltiPaymentScreenState extends State<KhaltiPaymentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Khalti Payment')),
+      appBar: AppBar(
+        title: const Text('Khalti Payment'),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+      ),
       body: WebViewWidget(controller: _controller),
     );
   }

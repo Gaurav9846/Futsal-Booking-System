@@ -9,7 +9,6 @@ import {
 } from '../controllers/owner.controller.js';
 import {
   checkInBooking,
-  completeBooking,
   confirmCodPayment,
   userCancelBooking
 } from '../controllers/booking.controller.js';
@@ -31,7 +30,6 @@ router.get('/bookings/month', getMonthBookings);
 
 // ✅ Booking actions
 router.put('/bookings/:bookingId/checkin', checkInBooking);
-router.put('/bookings/:bookingId/complete', completeBooking);
 router.put('/bookings/:bookingId/cod-confirm', confirmCodPayment);
 router.put('/bookings/:bookingId/cancel', userCancelBooking);  // reuse same cancel logic
 

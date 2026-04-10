@@ -60,18 +60,20 @@ Future<void> fetchFutsals() async {
   notifyListeners();
 
   try {
-    // Fetch GPS and futsals in parallel
+    debugPrint('📍 FETCHING FUTSALS - START');
+    
     await Future.wait([
       _fetchPlayerLocation(),
       ApiService.getList('futsals').then((data) {
+        debugPrint('📍 API RESPONSE DATA LENGTH: ${data.length}');
         _futsals = data
             .map((json) => Futsal.fromJson(json as Map<String, dynamic>))
             .where((f) => f.isApproved)
             .toList();
+        debugPrint('📍 PARSED FUTSALS COUNT: ${_futsals.length}');
       }),
     ]);
 
-    // Calculate distance for each futsal
     if (_playerPosition != null) {
       for (final futsal in _futsals) {
         if (futsal.latitude != null && futsal.longitude != null) {
@@ -83,7 +85,6 @@ Future<void> fetchFutsals() async {
           );
         }
       }
-      // Sort by distance — futsals with no location go to bottom
       _futsals.sort((a, b) =>
         (a.distance ?? 999).compareTo(b.distance ?? 999)
       );
@@ -91,6 +92,7 @@ Future<void> fetchFutsals() async {
     _isLoading = false;
     notifyListeners();
   } catch (e) {
+    debugPrint('❌ FETCH FUTSALS ERROR: $e');
     _isLoading = false;
     _error = 'Failed to load futsals: $e';
     notifyListeners();

@@ -33,9 +33,8 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () =>
-                Provider.of<AdminProvider>(context, listen: false)
-                    .loadAllFutsals(),
+            onPressed: () => Provider.of<AdminProvider>(context, listen: false)
+                .loadAllFutsals(),
           ),
         ],
       ),
@@ -110,8 +109,8 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
                   children: [
                     Text(
                       '${futsals.length} futsals',
-                      style: TextStyle(
-                          color: Colors.grey.shade600, fontSize: 13),
+                      style:
+                          TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     ),
                   ],
                 ),
@@ -140,8 +139,8 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
     );
   }
 
-  Widget _buildFutsalCard(BuildContext context,
-      Map<String, dynamic> futsal, AdminProvider adminProvider) {
+  Widget _buildFutsalCard(BuildContext context, Map<String, dynamic> futsal,
+      AdminProvider adminProvider) {
     final isApproved = futsal['isApproved'] == true;
 
     return Card(
@@ -251,13 +250,13 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
                               fontSize: 13, color: Colors.grey.shade600),
                         ),
                       ),
-                      Icon(Icons.currency_rupee,
+                      Icon(Icons.attach_money,
                           size: 14, color: Colors.green.shade600),
                       Text(
-                        '${futsal['basePrice']}/hr',
+                        'Price varies',
                         style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.green.shade700,
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -366,8 +365,7 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
             // Name
             Text(
               futsal['name'] ?? 'Unnamed Futsal',
-              style: const TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
@@ -385,18 +383,16 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
 
             // Owner section
             const Text('Owner Details',
-                style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            _buildDetailRow(Icons.person,
-                futsal['owner']?['fullName'] ?? 'Unknown'),
+            _buildDetailRow(
+                Icons.person, futsal['owner']?['fullName'] ?? 'Unknown'),
             const SizedBox(height: 6),
             if (futsal['owner']?['email'] != null)
               GestureDetector(
                 onTap: () => _copyToClipboard(
                     context, futsal['owner']['email'], 'Email'),
-                child: _buildDetailRow(
-                    Icons.email, futsal['owner']['email'],
+                child: _buildDetailRow(Icons.email, futsal['owner']['email'],
                     color: Colors.blue),
               ),
             const SizedBox(height: 6),
@@ -411,13 +407,12 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
 
             const Divider(height: 24),
 
-            // Pricing
+// Pricing
             const Text('Pricing',
-                style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            _buildDetailRow(Icons.currency_rupee,
-                'Base Price: रू ${futsal['basePrice']}/hr'),
+            _buildDetailRow(
+                Icons.attach_money, 'Pricing varies by court and time'),
 
             // Courts
             if (futsal['courts'] != null &&
@@ -425,8 +420,8 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
               const Divider(height: 24),
               Text(
                 'Courts (${(futsal['courts'] as List).length})',
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               ...(futsal['courts'] as List).map((court) => Padding(
@@ -445,8 +440,7 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
                           const SizedBox(width: 8),
                           Text(
                             'Court ${court['courtNumber']} • ${court['courtType']}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                           const Spacer(),
                           Text(
@@ -459,8 +453,7 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
                             Text(
                               ' / रू ${court['peakPrice']} 🔥',
                               style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.orange.shade700),
+                                  fontSize: 12, color: Colors.orange.shade700),
                             ),
                         ],
                       ),
@@ -472,8 +465,7 @@ class _AdminAllFutsalsScreenState extends State<AdminAllFutsalsScreen> {
 
             // Contact buttons in sheet
             const Text('Contact Owner',
-                style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             _buildContactButtons(context, futsal),
           ],
