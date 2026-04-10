@@ -43,6 +43,8 @@ import reviewRoutes from './routes/review.routes.js';
 import adminRoutes from "./routes/admin.routes.js";
 import blockRoutes from "./routes/block.routes.js";
 import uploadRoutes from './routes/upload.routes.js';
+import favoriteRoutes from './routes/favorite.routes.js';
+import settingsRoutes from './routes/settings.routes.js';
 
 // Use routes
 app.use('/api/auth', authRoutes);
@@ -56,6 +58,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/owner/blocks", blockRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/favorites', favoriteRoutes);
+app.use('/api/admin/settings', settingsRoutes);
 
 
 // Basic test route
@@ -66,6 +70,7 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

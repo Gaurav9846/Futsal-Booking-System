@@ -12,7 +12,9 @@ import {
   rejectFutsal,
   generateReport,            // ✅ new
   getAllBookings,
-  getAdminAnalytics
+  getAdminAnalytics,
+   getAdminProfile,      // ✅ Add this
+  updateAdminProfile,   // ✅ Add this
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -36,5 +38,11 @@ router.get("/reports", authenticate, authorize("ADMIN"), generateReport); // ✅
 
 router.get("/bookings", authenticate, authorize("ADMIN"), getAllBookings);
 router.get("/analytics", authenticate, authorize("ADMIN"), getAdminAnalytics);
+
+/* Admin Profile */
+router.get("/profile", authenticate, authorize("ADMIN"), getAdminProfile);
+router.put("/profile", authenticate, authorize("ADMIN"), updateAdminProfile);
+
+
 
 export default router;

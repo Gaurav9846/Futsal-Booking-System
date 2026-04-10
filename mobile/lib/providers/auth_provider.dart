@@ -16,6 +16,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isOwner => _user?.role == 'OWNER';
   bool get isPlayer => _user?.role == 'PLAYER';
   bool get isAdmin => _user?.role == 'ADMIN'; // Added admin check
+  Map<String, dynamic> _adminProfile = {};
+  Map<String, dynamic> get adminProfile => _adminProfile;
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     _isLoading = true;
@@ -23,34 +25,36 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final response = await ApiService.login(email, password);
-      
+
       debugPrint('📦 AuthProvider login response: $response');
 
-      // Check if login was successful
+      // 1. Check if login was successful (Verified User)
       if (response['status'] == 'success') {
-        // Extract user data from different possible response structures
+        // Extract user and token (Same as your previous logic)
         if (response.containsKey('user')) {
           _user = User.fromJson(response['user']);
-        } else if (response.containsKey('data') && response['data'].containsKey('user')) {
+        } else if (response.containsKey('data') &&
+            response['data'].containsKey('user')) {
           _user = User.fromJson(response['data']['user']);
-        } else if (response.containsKey('data') && response['data'] is Map) {
-          // If data contains user fields directly
-          _user = User.fromJson(response['data']);
         }
-        
-        _token = response['token'] ?? response['data']?['token'] ?? response['accessToken'];
+
+        _token = response['token'] ??
+            response['data']?['token'] ??
+            response['accessToken'];
 
         if (_token != null && _user != null) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', _token!);
           await prefs.setString('user', jsonEncode(_user!.toJson()));
-          
-          // Log the user role for debugging
-          debugPrint('👤 User role: ${_user!.role}');
-          debugPrint('🔑 Is Admin: $isAdmin');
-          debugPrint('🔑 Is Owner: $isOwner');
-          debugPrint('🔑 Is Player: $isPlayer');
+
+          debugPrint('👤 User Logged In: ${_user!.role}');
         }
+      }
+      // 2. Handle Unverified User (Security Gate)
+      else if (response['requiresVerification'] == true) {
+        debugPrint('⚠️ User needs email verification');
+        // हामी यहाँ केही पनि Save गर्दैनौँ (No token, No user)
+        // सिधै Response फिर्ता पठाउँछौँ ताकि UI ले थाहा पाओस्
       }
 
       _isLoading = false;
@@ -59,10 +63,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       notifyListeners();
-      return {
-        "status": "error",
-        "message": "Connection error: $e"
-      };
+      return {"status": "error", "message": "Connection error: $e"};
     }
   }
 
@@ -72,7 +73,7 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final response = await ApiService.register(userData);
-      
+
       debugPrint('📦 AuthProvider register response: $response');
 
       _isLoading = false;
@@ -81,10 +82,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       notifyListeners();
-      return {
-        "status": "error",
-        "message": "Connection error: $e"
-      };
+      return {"status": "error", "message": "Connection error: $e"};
     }
   }
 
@@ -124,7 +122,7 @@ class AuthProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final userString = prefs.getString('user');
-    
+
     if (token != null && userString != null) {
       _token = token;
       _user = User.fromJson(jsonDecode(userString));
@@ -134,13 +132,47 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> saveAuthData(String token, Map<String, dynamic> userData) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString('token', token);
-  await prefs.setString('user', json.encode(userData));
-  _user = User.fromJson(userData);
-  _token = token;
-  notifyListeners();
-}
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+    await prefs.setString('user', json.encode(userData));
+    _user = User.fromJson(userData);
+    _token = token;
+    notifyListeners();
+  }
+
+  Future<void> loadAdminProfile() async {
+    if (!isAdmin) return;
+
+    try {
+      final response = await ApiService.get('admin/profile');
+      if (response['status'] == 'success') {
+        _adminProfile = response['data'] ?? {};
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Load admin profile error: $e');
+    }
+  }
+
+// Update current user data (call after profile update)
+  void updateUser(Map<String, dynamic> userData) {
+    if (_user != null) {
+      _user = User.fromJson({
+        ..._user!.toJson(),
+        ...userData,
+      });
+      notifyListeners();
+
+      // Also update stored user in SharedPreferences
+      _saveUserToStorage();
+    }
+  }
+
+// Helper to save user to storage
+  Future<void> _saveUserToStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user', jsonEncode(_user!.toJson()));
+  }
 
   // Helper method to get role-based home route
   String get homeRoute {

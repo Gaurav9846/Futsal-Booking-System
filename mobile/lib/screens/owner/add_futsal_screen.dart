@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../providers/futsal_provider.dart';
 import '../../services/api_service.dart';
 import 'dart:typed_data';
+import '../../widgets/operating_hours_input.dart';
 
 class AddFutsalScreen extends StatefulWidget {
   final Map<String, dynamic>? futsalToEdit;
@@ -19,15 +20,17 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _addressController = TextEditingController();
-  final _priceController = TextEditingController();
 
   bool _isSubmitting = false;
   bool _isEditing = false;
   bool _isGettingLocation = false;
 
+  // Operating Hours
+  Map<String, dynamic> _operatingHours = {};
+
   // Images
-  final List<XFile> _newImages = [];         // newly picked images
-  List<String> _existingImageUrls = [];      // already uploaded URLs (edit mode)
+  final List<XFile> _newImages = []; // newly picked images
+  List<String> _existingImageUrls = []; // already uploaded URLs (edit mode)
   final ImagePicker _picker = ImagePicker();
 
   // Location
@@ -43,11 +46,13 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
       _nameController.text = widget.futsalToEdit!['name'] ?? '';
       _descriptionController.text = widget.futsalToEdit!['description'] ?? '';
       _addressController.text = widget.futsalToEdit!['address'] ?? '';
-      _priceController.text = widget.futsalToEdit!['basePrice']?.toString() ?? '';
-      _existingImageUrls = List<String>.from(widget.futsalToEdit!['images'] ?? []);
+      _existingImageUrls =
+          List<String>.from(widget.futsalToEdit!['images'] ?? []);
       _latitude = widget.futsalToEdit!['latitude'];
       _longitude = widget.futsalToEdit!['longitude'];
       _locationSet = _latitude != null && _longitude != null;
+      _operatingHours = Map<String, dynamic>.from(
+          widget.futsalToEdit!['operatingHours'] ?? {});
     }
   }
 
@@ -56,7 +61,6 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
     _nameController.dispose();
     _descriptionController.dispose();
     _addressController.dispose();
-    _priceController.dispose();
     super.dispose();
   }
 
@@ -176,14 +180,15 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
             ? null
             : _descriptionController.text.trim(),
         'address': _addressController.text.trim(),
-        'basePrice': double.parse(_priceController.text.trim()),
         'images': allImageUrls,
         if (_latitude != null) 'latitude': _latitude,
         if (_longitude != null) 'longitude': _longitude,
+        'operatingHours': _operatingHours.isNotEmpty ? _operatingHours : null,
       };
 
       // Step 4: Create or update futsal
-      final futsalProvider = Provider.of<FutsalProvider>(context, listen: false);
+      final futsalProvider =
+          Provider.of<FutsalProvider>(context, listen: false);
       late final Map<String, dynamic> response;
 
       if (_isEditing) {
@@ -200,7 +205,8 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(response['message'] ?? 'Operation completed'),
-          backgroundColor: response['status'] == 'success' ? Colors.green : Colors.red,
+          backgroundColor:
+              response['status'] == 'success' ? Colors.green : Colors.red,
         ),
       );
 
@@ -249,11 +255,13 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
                 decoration: InputDecoration(
                   labelText: 'Futsal Name *',
                   hintText: 'e.g., Green Field Futsal',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
                   prefixIcon: const Icon(Icons.sports_soccer),
                 ),
                 validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter futsal name' : null,
+                    ? 'Please enter futsal name'
+                    : null,
               ),
               const SizedBox(height: 16),
 
@@ -263,7 +271,8 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
                 decoration: InputDecoration(
                   labelText: 'Description',
                   hintText: 'Tell players about your futsal...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
                   prefixIcon: const Icon(Icons.description),
                 ),
                 maxLines: 3,
@@ -276,11 +285,13 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
                 decoration: InputDecoration(
                   labelText: 'Address *',
                   hintText: 'e.g., Lakeside, Pokhara',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
                   prefixIcon: const Icon(Icons.location_on),
                 ),
                 validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter address' : null,
+                    ? 'Please enter address'
+                    : null,
               ),
               const SizedBox(height: 16),
 
@@ -288,21 +299,14 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
               _buildLocationButton(),
               const SizedBox(height: 16),
 
-              // Price
-              TextFormField(
-                controller: _priceController,
-                decoration: InputDecoration(
-                  labelText: 'Base Price (per hour) *',
-                  hintText: 'e.g., 1500',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  prefixIcon: const Icon(Icons.attach_money),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Please enter price';
-                  if (double.tryParse(value) == null) return 'Enter a valid number';
-                  if (double.parse(value) <= 0) return 'Price must be greater than 0';
-                  return null;
+              // Operating Hours
+              OperatingHoursInput(
+                initialHours:
+                    _operatingHours.isNotEmpty ? _operatingHours : null,
+                onChanged: (hours) {
+                  setState(() {
+                    _operatingHours = hours;
+                  });
                 },
               ),
               const SizedBox(height: 24),
@@ -354,7 +358,8 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
                       ),
                       child: Text(
                         _isEditing ? 'Update Futsal' : 'Add Futsal',
-                        style: const TextStyle(fontSize: 18, color: Colors.white),
+                        style:
+                            const TextStyle(fontSize: 18, color: Colors.white),
                       ),
                     ),
             ],
@@ -383,8 +388,10 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
             if (totalImages < 5)
               TextButton.icon(
                 onPressed: _pickImages,
-                icon: const Icon(Icons.add_photo_alternate, color: Colors.green),
-                label: const Text('Add Photos', style: TextStyle(color: Colors.green)),
+                icon:
+                    const Icon(Icons.add_photo_alternate, color: Colors.green),
+                label: const Text('Add Photos',
+                    style: TextStyle(color: Colors.green)),
               ),
           ],
         ),
@@ -398,15 +405,20 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                border: Border.all(
+                    color: Colors.grey.shade300, style: BorderStyle.solid),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey.shade400),
+                  Icon(Icons.add_photo_alternate,
+                      size: 40, color: Colors.grey.shade400),
                   const SizedBox(height: 8),
-                  Text('Tap to add photos', style: TextStyle(color: Colors.grey.shade500)),
-                  Text('Up to 5 images', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+                  Text('Tap to add photos',
+                      style: TextStyle(color: Colors.grey.shade500)),
+                  Text('Up to 5 images',
+                      style:
+                          TextStyle(color: Colors.grey.shade400, fontSize: 12)),
                 ],
               ),
             ),
@@ -437,7 +449,8 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
-                      child: Icon(Icons.add, color: Colors.grey.shade400, size: 32),
+                      child: Icon(Icons.add,
+                          color: Colors.grey.shade400, size: 32),
                     ),
                   ),
               ],
@@ -460,12 +473,14 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
           ),
         ),
         Positioned(
-          top: 4, right: 12,
+          top: 4,
+          right: 12,
           child: GestureDetector(
             onTap: () => _removeExistingImage(index),
             child: Container(
               padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+              decoration: const BoxDecoration(
+                  color: Colors.red, shape: BoxShape.circle),
               child: const Icon(Icons.close, size: 14, color: Colors.white),
             ),
           ),
@@ -482,14 +497,17 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return Container(
-                width: 100, height: 100,
+                width: 100,
+                height: 100,
                 margin: const EdgeInsets.only(right: 8),
                 color: Colors.grey.shade200,
-                child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2)),
               );
             }
             return Container(
-              width: 100, height: 100,
+              width: 100,
+              height: 100,
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
@@ -502,12 +520,14 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
           },
         ),
         Positioned(
-          top: 4, right: 12,
+          top: 4,
+          right: 12,
           child: GestureDetector(
             onTap: () => _removeNewImage(index),
             child: Container(
               padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+              decoration: const BoxDecoration(
+                  color: Colors.red, shape: BoxShape.circle),
               child: const Icon(Icons.close, size: 14, color: Colors.white),
             ),
           ),
@@ -544,7 +564,9 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
                   _locationSet ? 'Location Set ✅' : 'Location Not Set',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    color: _locationSet ? Colors.green.shade700 : Colors.grey.shade700,
+                    color: _locationSet
+                        ? Colors.green.shade700
+                        : Colors.grey.shade700,
                   ),
                 ),
                 if (_locationSet)
@@ -562,7 +584,8 @@ class _AddFutsalScreenState extends State<AddFutsalScreen> {
           ),
           _isGettingLocation
               ? const SizedBox(
-                  width: 20, height: 20,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : TextButton(

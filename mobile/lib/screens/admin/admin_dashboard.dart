@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/admin_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/admin/futsal_details_modal.dart';
+import '../../widgets/admin/admin_edit_profile_dialog.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -29,12 +31,68 @@ class _AdminDashboardState extends State<AdminDashboard> {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         actions: [
+          // Refresh button
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => Provider.of<AdminProvider>(context, listen: false)
                 .loadDashboardStats(),
             tooltip: 'Refresh',
           ),
+
+          // Admin Profile Popup Menu
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, _) {
+              final name = authProvider.user?.fullName ?? 'A';
+              return PopupMenuButton<String>(
+                icon: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : 'A',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+                onSelected: (value) async {
+                  if (value == 'profile') {
+                    await authProvider.loadAdminProfile();
+                    if (mounted) {
+                      _showProfileDialog(context, authProvider);
+                    }
+                  } else if (value == 'logout') {
+                    _showLogoutConfirmation(context, authProvider);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'profile',
+                    child: Row(
+                      children: [
+                        Icon(Icons.person, size: 18, color: Colors.green,),
+                        SizedBox(width: 12),
+                        Text('Profile'),
+                        
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'logout',
+                    child: Row(
+                      children: [
+                        Icon(Icons.logout, size: 18, color: Colors.red),
+                        SizedBox(width: 12),
+                        Text('Logout', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Consumer<AdminProvider>(
@@ -307,5 +365,198 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
       ),
     );
+  }
+
+  void _showProfileDialog(BuildContext context, AuthProvider authProvider) {
+    final profile = authProvider.adminProfile;
+    final user = authProvider.user;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        // Remove the default title
+        titlePadding: EdgeInsets.zero,
+        contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Custom Header with Title and Close Button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Admin Profile',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    color: Colors.red.shade400, // Red close button
+                  )
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Avatar
+              Center(
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.green.shade100,
+                  child: Text(
+                    (user?.fullName ?? 'A')[0].toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green.shade800,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Name
+              Center(
+                child: Text(
+                  user?.fullName ?? 'Admin',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+
+              // Role Badge
+              Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    user?.role ?? 'ADMIN',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red.shade700,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              const Divider(),
+              const SizedBox(height: 12),
+
+              // Email
+              _buildInfoRow(Icons.email_outlined, user?.email ?? 'No email'),
+              const SizedBox(height: 12),
+
+              // Phone
+              _buildInfoRow(
+                  Icons.phone_outlined, user?.phoneNumber ?? 'No phone'),
+              const SizedBox(height: 12),
+
+              // Join Date
+              _buildInfoRow(Icons.calendar_today, _formatDate(user?.createdAt)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(context); // Close profile dialog
+              showDialog(
+                context: context,
+                builder: (_) => const AdminEditProfileDialog(),
+              );
+            },
+            child: const Text('Edit Profile'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutConfirmation(
+      BuildContext context, AuthProvider authProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              await authProvider.logout(); // Call AuthProvider logout
+              if (mounted) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
+              }
+            },
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey.shade600),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade800),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Not available';
+    try {
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return 'Not available';
+    }
   }
 }

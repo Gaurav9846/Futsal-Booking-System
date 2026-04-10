@@ -10,6 +10,9 @@ import 'providers/booking_provider.dart';
 import 'providers/admin_provider.dart';
 import 'providers/tournament_provider.dart';
 import 'providers/review_provider.dart';
+import 'providers/favorite_provider.dart';
+import 'providers/block_provider.dart'; 
+import 'providers/settings_provider.dart';
 
 // Screens
 import 'screens/splash_screen.dart';
@@ -44,6 +47,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AdminProvider()),
         ChangeNotifierProvider(create: (_) => TournamentProvider()),
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
+        ChangeNotifierProvider(create: (_) => FavoriteProvider()),
+        ChangeNotifierProvider(create: (_) => BlockProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],
       child: MaterialApp(
         title: 'Futsal Booking',

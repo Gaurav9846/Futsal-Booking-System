@@ -28,6 +28,7 @@ model User {
 
   ownerBlocks  Block[]      @relation("OwnerBlocks")
   playerBlocks Block[]      @relation("PlayerBlocks")
+  favorites    Favorite[]
 }
 
 model Futsal {
@@ -37,10 +38,10 @@ model Futsal {
   address     String
   latitude    Float?
   longitude   Float?
-  basePrice   Float
   images      String[]
   ownerId     Int
   isApproved  Boolean      @default(false)
+  status      FutsalStatus @default(PENDING)
   createdAt   DateTime     @default(now())
 
   owner       User         @relation("OwnerFutsals", fields: [ownerId], references: [id])
@@ -48,6 +49,8 @@ model Futsal {
   courts      Court[]
   tournaments Tournament[]
   blocks      Block[]
+  favorites   Favorite[]
+  operatingHours Json?  // Store as JSON: { "monday": "6:00-22:00", ... }
 }
 
 model Court {
@@ -113,6 +116,7 @@ model Payment {
   method        String
   status        String
   transactionId String?
+  
   createdAt     DateTime @default(now())
 
   booking       Booking  @relation(fields: [bookingId], references: [id])
@@ -216,6 +220,29 @@ model Block {
   @@unique([ownerId, playerId, futsalId])
 }
 
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  futsalId  Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  futsal    Futsal   @relation(fields: [futsalId], references: [id])
+
+  @@unique([userId, futsalId])
+}
+
+model SystemSettings {
+  id                       Int      @id @default(autoincrement())
+  autoApproveOwners        Boolean  @default(false)
+  autoApproveFutsals       Boolean  @default(false)
+  maintenanceMode          Boolean  @default(false)
+  bookingCancellationHours Int      @default(2)
+  slotLockMinutes          Int      @default(5)
+  slotGenerationDays       Int      @default(30)
+  updatedAt                DateTime @updatedAt
+}
+
 enum Role {
   PLAYER
   OWNER
@@ -245,4 +272,10 @@ enum MatchStatus {
   ONGOING
   COMPLETED
   CANCELLED
+}
+
+enum FutsalStatus {
+  PENDING     // Waiting for admin approval
+  ACTIVE      // Approved and active
+  DEACTIVATED // Owner deactivated
 }

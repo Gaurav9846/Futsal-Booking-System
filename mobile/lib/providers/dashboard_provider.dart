@@ -33,7 +33,6 @@ class DashboardProvider with ChangeNotifier {
     debugPrint('📊 Dashboard: Loading stats for futsal $futsalId');
     
     try {
-      // Load all stats in parallel for better performance
       await Future.wait([
         _loadStats(futsalId),
         _loadTodayBookings(futsalId),
@@ -65,27 +64,26 @@ class DashboardProvider with ChangeNotifier {
       debugPrint('📊 Stats: Courts=$totalCourts, Bookings=$todayBookings, Revenue=$todayRevenue');
     } catch (e) {
       debugPrint('📊 Stats Error: $e');
-      // Don't rethrow, just use defaults
     }
   }
 
-  // Load today's bookings
-  Future<void> _loadTodayBookings(int futsalId) async {
-    try {
-      final response = await ApiService.getDashboardTodayBookings(futsalId);
-      
-      if (response is List) {
-        _todayBookingsList = response
-            .map((json) => Booking.fromJson(json))
-            .toList();
-      }
-      
-      debugPrint('📊 Today\'s Bookings: ${_todayBookingsList.length} bookings');
-    } catch (e) {
-      debugPrint('📊 Today Bookings Error: $e');
-      _todayBookingsList = [];
+// Load today's bookings
+Future<void> _loadTodayBookings(int futsalId) async {
+  try {
+    final response = await ApiService.getOwnerTodayBookings(futsalId);
+    
+    if (response is List) {
+      _todayBookingsList = response
+          .map((json) => Booking.fromJson(json))
+          .toList();
     }
+    
+    debugPrint('📊 Today\'s Bookings: ${_todayBookingsList.length} bookings');
+  } catch (e) {
+    debugPrint('📊 Today Bookings Error: $e');
+    _todayBookingsList = [];
   }
+}
 
   // Load weekly revenue for chart
   Future<void> _loadWeeklyRevenue(int futsalId) async {
@@ -144,33 +142,9 @@ class DashboardProvider with ChangeNotifier {
   }
 
   // Cancel a booking (owner action)
-  // In dashboard_provider.dart, replace the cancelBooking method (around line 145-155) with:
-
-// Cancel a booking (owner action) - UPDATED to use correct ApiService method
-Future<Map<String, dynamic>> cancelBooking(int bookingId, int futsalId) async {
-  try {
-    // Use ApiService.cancelBooking which exists for owner actions
-    final response = await ApiService.cancelUserBooking(bookingId);
-    
-    if (response['status'] == 'success') {
-      await _loadTodayBookings(futsalId);
-      notifyListeners();
-    }
-    
-    return response;
-  } catch (e) {
-    debugPrint('❌ Cancel booking error: $e');
-    return {
-      'status': 'error',
-      'message': e.toString()
-    };
-  }
-}
-
-  // Complete a booking (owner action)
-  Future<Map<String, dynamic>> completeBooking(int bookingId, int futsalId) async {
+  Future<Map<String, dynamic>> cancelBooking(int bookingId, int futsalId) async {
     try {
-      final response = await ApiService.completeBooking(bookingId);
+      final response = await ApiService.ownerCancelBooking(bookingId);
       
       if (response['status'] == 'success') {
         await _loadTodayBookings(futsalId);
@@ -179,7 +153,7 @@ Future<Map<String, dynamic>> cancelBooking(int bookingId, int futsalId) async {
       
       return response;
     } catch (e) {
-      debugPrint('❌ Complete booking error: $e');
+      debugPrint('❌ Cancel booking error: $e');
       return {
         'status': 'error',
         'message': e.toString()
@@ -187,25 +161,8 @@ Future<Map<String, dynamic>> cancelBooking(int bookingId, int futsalId) async {
     }
   }
 
-  // Update payment status (owner action)
-  Future<Map<String, dynamic>> updatePaymentStatus(int bookingId, String status, int futsalId) async {
-    try {
-      final response = await ApiService.updatePaymentStatus(bookingId, status);
-      
-      if (response['status'] == 'success') {
-        await _loadTodayBookings(futsalId);
-        notifyListeners();
-      }
-      
-      return response;
-    } catch (e) {
-      debugPrint('❌ Update payment error: $e');
-      return {
-        'status': 'error',
-        'message': e.toString()
-      };
-    }
-  }
+  // ❌ REMOVED: completeBooking (no longer needed - merged with payment)
+  // ❌ REMOVED: updatePaymentStatus (use BookingProvider.initiateCodPayment instead)
 
   // Clear data (useful for logout)
   void clearData() {
