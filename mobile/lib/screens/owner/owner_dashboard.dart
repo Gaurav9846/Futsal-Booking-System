@@ -459,12 +459,26 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           onRefresh: _loadAllData,
           child: _buildBody(futsalProvider, dashboardProvider),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => _navigateToAddFutsal(),
-          icon: const Icon(Icons.add),
-          label: const Text('Add Futsal'),
-          backgroundColor: Colors.green,
-          tooltip: 'Add new futsal',
+        floatingActionButton: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            gradient: AppTheme.primaryGradient,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primary.withOpacity(0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: FloatingActionButton.extended(
+            onPressed: () => _navigateToAddFutsal(),
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text('Add Futsal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            tooltip: 'Add new futsal',
+          ),
         ),
       ),
     );
@@ -473,13 +487,30 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   Widget _buildBody(
       FutsalProvider futsalProvider, DashboardProvider dashboardProvider) {
     if (futsalProvider.isLoading && futsalProvider.myFutsals.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Loading your futsals...'),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceLight,
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                border: Border.all(color: AppTheme.surfaceBorder),
+              ),
+              child: const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                strokeWidth: 3,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Loading your futsals...',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 16,
+              ),
+            ),
           ],
         ),
       );
@@ -492,14 +523,40 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 60, color: Colors.red.shade300),
-              const SizedBox(height: 16),
-              Text(futsalProvider.error!,
-                  style: const TextStyle(fontSize: 16),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                  onPressed: _loadAllData, child: const Text('Try Again')),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                  border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+                ),
+                child: Icon(Icons.error_outline, size: 48, color: AppTheme.error),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                futsalProvider.error!,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                ),
+                child: ElevatedButton(
+                  onPressed: _loadAllData,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: const Text('Try Again', style: TextStyle(color: Colors.white)),
+                ),
+              ),
             ],
           ),
         ),
@@ -511,13 +568,36 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.sports_soccer, size: 80, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text('No futsals yet',
-                style: TextStyle(fontSize: 18, color: Colors.grey.shade600)),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceLight,
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                border: Border.all(color: AppTheme.surfaceBorder),
+              ),
+              child: Icon(
+                Icons.sports_soccer,
+                size: 64,
+                color: AppTheme.primary.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'No futsals yet',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text('Tap the + button to add your first futsal',
-                style: TextStyle(color: Colors.grey.shade500)),
+            const Text(
+              'Tap the + button to add your first futsal',
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 14,
+              ),
+            ),
           ],
         ),
       );
@@ -615,10 +695,29 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         const SizedBox(height: 16),
 
         // My Futsals Section
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8),
-          child: Text('My Futsals',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 20,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'My Futsals',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
 
@@ -678,52 +777,64 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     final hasMultipleFutsals = futsalProvider.myFutsals.length > 1;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.green.shade50, Colors.green.shade100],
+          colors: [
+            AppTheme.primary.withOpacity(0.15),
+            AppTheme.primaryLight.withOpacity(0.1),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green.shade200),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
       ),
       child: InkWell(
         onTap: hasMultipleFutsals ? _showFutsalSelector : null,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.green.shade200,
-                borderRadius: BorderRadius.circular(10),
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.sports_soccer,
-                color: Colors.green.shade700,
-                size: 20,
+                color: Colors.white,
+                size: 24,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Active Futsal',
+                    'ACTIVE FUTSAL',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.green.shade700,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 11,
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     _selectedFutsal?.name ?? 'None',
                     style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      color: AppTheme.textPrimary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -732,27 +843,27 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             ),
             if (hasMultipleFutsals)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade200,
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppTheme.surfaceLight,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusRound),
+                  border: Border.all(color: AppTheme.surfaceBorder),
                 ),
                 child: Row(
                   children: [
                     Text(
                       'Switch',
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.green.shade700,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Icon(
                       Icons.swap_vert,
-                      size: 16,
-                      color: Colors.green.shade700,
+                      size: 18,
+                      color: AppTheme.primary,
                     ),
                   ],
                 ),
